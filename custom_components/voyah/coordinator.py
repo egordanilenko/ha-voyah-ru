@@ -16,13 +16,11 @@ from .const import CONF_ACCESS_TOKEN, CONF_REFRESH_TOKEN, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-type VoyahConfigEntry = ConfigEntry[VoyahDataUpdateCoordinator]
-
 
 class VoyahDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     """Coordinator to manage fetching Voyah vehicle data."""
 
-    config_entry: VoyahConfigEntry
+    config_entry: ConfigEntry
 
     def __init__(
         self,
