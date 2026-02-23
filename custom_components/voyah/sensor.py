@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 from homeassistant.components.sensor import SensorEntity, SensorEntityDescription
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -12,6 +14,8 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import CONF_CAR_ID, CONF_CAR_NAME, DOMAIN, SENSOR_DESCRIPTIONS
 from .coordinator import VoyahDataUpdateCoordinator
 
+_LOGGER = logging.getLogger(__name__)
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -21,11 +25,19 @@ async def async_setup_entry(
     """Set up Voyah sensor entities."""
     coordinator: VoyahDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
 
-    async_add_entities(
+    _LOGGER.debug(
+        "Setting up sensors. coordinator.data type=%s, value=%s",
+        type(coordinator.data).__name__,
+        coordinator.data,
+    )
+
+    entities = [
         VoyahSensorEntity(coordinator, description, entry)
         for description in SENSOR_DESCRIPTIONS
         if description.key in coordinator.data.get("sensors_data", {})
-    )
+    ]
+    _LOGGER.debug("Creating %d sensor entities", len(entities))
+    async_add_entities(entities)
 
 
 class VoyahSensorEntity(CoordinatorEntity[VoyahDataUpdateCoordinator], SensorEntity):

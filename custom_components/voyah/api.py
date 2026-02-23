@@ -124,7 +124,14 @@ class VoyahApiClient:
         raw = await self._request(
             "GET", f"/car-service/car/v2/{self._car_id}"
         )
-        return self._parse(raw)
+        _LOGGER.debug("Raw API response keys: %s", list(raw.keys()) if raw else None)
+        parsed = self._parse(raw)
+        _LOGGER.debug(
+            "Parsed data: sensors_data keys=%s, time=%s",
+            list(parsed.get("sensors_data", {}).keys()),
+            parsed.get("time"),
+        )
+        return parsed
 
     @staticmethod
     def _parse(raw: dict[str, Any]) -> dict[str, Any]:
