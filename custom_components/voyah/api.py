@@ -120,33 +120,23 @@ class VoyahApiClient:
             return False
 
     async def async_get_car_data(self) -> dict[str, Any]:
-        """Fetch vehicle data via search endpoint (returns full sensor data)."""
-        resp = await self._request(
-            "POST",
-            "/car-service/car/v2/search",
-            json_data={"addSensors": True},
+        """Fetch full telemetry from the tbox endpoint."""
+        raw = await self._request(
+            "GET",
+            f"/car-service/tbox/{self._car_id}/sensors",
         )
-        rows = resp.get("rows", [])
-        raw = next(
-            (r for r in rows if r.get("_id") == self._car_id),
-            rows[0] if rows else None,
-        )
-        if not raw:
-            raise VoyahApiError(f"Car {self._car_id} not found in search results")
         _LOGGER.debug(
-            "Car data keys: %s, has sensors: %s",
+            "Tbox response keys: %s",
             list(raw.keys()),
-            "sensors" in raw,
         )
         return self._parse(raw)
 
     @staticmethod
     def _parse(raw: dict[str, Any]) -> dict[str, Any]:
-        """Extract relevant fields from the raw API response."""
-        sensors = raw.get("sensors") or {}
-        sensors_data: dict[str, Any] = sensors.get("sensorsData", {})
-        position_data: dict[str, Any] = sensors.get("positionData", {})
-        timestamp: int | None = sensors.get("time")
+        """Extract relevant fields from the tbox sensors response."""
+        sensors_data: dict[str, Any] = dict(raw.get("sensorsData") or {})
+        position_data: dict[str, Any] = raw.get("positionData") or {}
+        timestamp: int | None = raw.get("time")
 
         if position_data.get("speed") is not None:
             sensors_data["speed"] = position_data["speed"]
