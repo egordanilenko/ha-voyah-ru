@@ -1,0 +1,27 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.*
+venv/
+.venv/
+
+# Sensitive data
+sample.json
+/tmp/
+
+# OS
+.DS_Store
+Thumbs.db

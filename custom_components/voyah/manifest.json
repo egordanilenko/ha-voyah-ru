@@ -1,0 +1,11 @@
+{
+    "domain": "voyah",
+    "name": "Voyah",
+    "codeowners": [],
+    "config_flow": true,
+    "dependencies": [],
+    "documentation": "https://github.com/egor/ha-voyah",
+    "iot_class": "cloud_polling",
+    "requirements": ["aiohttp>=3.8.0"],
+    "version": "0.1.0"
+}

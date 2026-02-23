@@ -1,0 +1,89 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "Voyah — Phone number",
+                "description": "Enter your phone number to receive an SMS code.",
+                "data": {
+                    "phone": "Phone number"
+                },
+                "data_description": {
+                    "phone": "Format: 79001234567 (11 digits)"
+                }
+            },
+            "code": {
+                "title": "Voyah — SMS code",
+                "description": "An SMS code has been sent to {phone}.",
+                "data": {
+                    "code": "SMS code"
+                }
+            },
+            "organization": {
+                "title": "Voyah — Organization",
+                "description": "Select the organization.",
+                "data": {
+                    "organization": "Organization"
+                }
+            },
+            "car": {
+                "title": "Voyah — Select car",
+                "description": "Select the car to monitor.",
+                "data": {
+                    "car": "Car"
+                }
+            }
+        },
+        "error": {
+            "cannot_connect": "Failed to connect to the Voyah API",
+            "invalid_code": "Invalid SMS code",
+            "invalid_auth": "Authentication failed",
+            "unknown": "Unexpected error"
+        },
+        "abort": {
+            "already_configured": "This car is already configured",
+            "no_cars": "No cars found for this account"
+        }
+    },
+    "entity": {
+        "sensor": {
+            "battery_percentage": { "name": "Battery" },
+            "remains_mileage": { "name": "Remaining range (electric)" },
+            "fuel_percentage": { "name": "Fuel level" },
+            "remains_mileage_fuel": { "name": "Remaining range (fuel)" },
+            "battery_voltage_12v": { "name": "12V battery voltage" },
+            "odometer": { "name": "Odometer" },
+            "outside_temperature": { "name": "Outside temperature" },
+            "battery_temperature": { "name": "Battery temperature" },
+            "coolant_temperature": { "name": "Coolant temperature" },
+            "climate_target_temperature": { "name": "Climate target temperature" },
+            "climate_fan_speed": { "name": "Climate fan speed" },
+            "tire_pressure_front_left": { "name": "Tire pressure front left" },
+            "tire_pressure_front_right": { "name": "Tire pressure front right" },
+            "tire_pressure_rear_left": { "name": "Tire pressure rear left" },
+            "tire_pressure_rear_right": { "name": "Tire pressure rear right" },
+            "speed": { "name": "Speed" }
+        },
+        "binary_sensor": {
+            "ignition": { "name": "Ignition" },
+            "charging": { "name": "Charging" },
+            "central_locking": { "name": "Central lock" },
+            "door_front_left": { "name": "Door front left" },
+            "door_front_right": { "name": "Door front right" },
+            "door_rear_left": { "name": "Door rear left" },
+            "trunk": { "name": "Trunk" },
+            "hatch": { "name": "Hatch" },
+            "climate": { "name": "Climate" },
+            "security": { "name": "Security" },
+            "headlights": { "name": "Headlights" },
+            "ready": { "name": "Ready" },
+            "airing": { "name": "Airing" },
+            "climate_front_window": { "name": "Climate front window" },
+            "mirrors_heating": { "name": "Mirrors heating" },
+            "wheel_heating": { "name": "Wheel heating" },
+            "seat_heating_driver": { "name": "Seat heating driver" },
+            "seat_heating_front_passenger": { "name": "Seat heating front passenger" },
+            "seat_heating_rear_left": { "name": "Seat heating rear left" },
+            "seat_heating_rear_right": { "name": "Seat heating rear right" }
+        }
+    }
+}

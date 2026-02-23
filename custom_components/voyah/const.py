@@ -1,0 +1,251 @@
+"""Constants for the Voyah integration."""
+
+from __future__ import annotations
+
+from homeassistant.components.binary_sensor import (
+    BinarySensorDeviceClass,
+    BinarySensorEntityDescription,
+)
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntityDescription,
+    SensorStateClass,
+)
+from homeassistant.const import (
+    PERCENTAGE,
+    UnitOfElectricPotential,
+    UnitOfLength,
+    UnitOfPressure,
+    UnitOfSpeed,
+    UnitOfTemperature,
+)
+
+DOMAIN = "voyah"
+
+API_BASE_URL = "https://app.voyahassist.ru"
+
+CONF_PHONE = "phone"
+CONF_ACCESS_TOKEN = "access_token"
+CONF_REFRESH_TOKEN = "refresh_token"
+CONF_CAR_ID = "car_id"
+CONF_CAR_NAME = "car_name"
+CONF_SCAN_INTERVAL = "scan_interval"
+DEFAULT_SCAN_INTERVAL = 60
+
+SENSOR_DESCRIPTIONS: tuple[SensorEntityDescription, ...] = (
+    SensorEntityDescription(
+        key="batteryPercentage",
+        translation_key="battery_percentage",
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=SensorDeviceClass.BATTERY,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="remainsMileage",
+        translation_key="remains_mileage",
+        native_unit_of_measurement=UnitOfLength.KILOMETERS,
+        device_class=SensorDeviceClass.DISTANCE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="fuelPercentage",
+        translation_key="fuel_percentage",
+        native_unit_of_measurement=PERCENTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        icon="mdi:gas-station",
+    ),
+    SensorEntityDescription(
+        key="remainsMileageFuel",
+        translation_key="remains_mileage_fuel",
+        native_unit_of_measurement=UnitOfLength.KILOMETERS,
+        device_class=SensorDeviceClass.DISTANCE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="12VBatteryVoltage",
+        translation_key="battery_voltage_12v",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="odometer",
+        translation_key="odometer",
+        native_unit_of_measurement=UnitOfLength.KILOMETERS,
+        device_class=SensorDeviceClass.DISTANCE,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        icon="mdi:counter",
+    ),
+    SensorEntityDescription(
+        key="outsideTemp",
+        translation_key="outside_temperature",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="batteryTemp",
+        translation_key="battery_temperature",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="coolantTemp",
+        translation_key="coolant_temperature",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="climateTargetTemp",
+        translation_key="climate_target_temperature",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="climateFanSpeed",
+        translation_key="climate_fan_speed",
+        state_class=SensorStateClass.MEASUREMENT,
+        icon="mdi:fan",
+    ),
+    SensorEntityDescription(
+        key="tirePressureFL",
+        translation_key="tire_pressure_front_left",
+        native_unit_of_measurement=UnitOfPressure.BAR,
+        device_class=SensorDeviceClass.PRESSURE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="tirePressureFR",
+        translation_key="tire_pressure_front_right",
+        native_unit_of_measurement=UnitOfPressure.BAR,
+        device_class=SensorDeviceClass.PRESSURE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="tirePressureRL",
+        translation_key="tire_pressure_rear_left",
+        native_unit_of_measurement=UnitOfPressure.BAR,
+        device_class=SensorDeviceClass.PRESSURE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="tirePressureRR",
+        translation_key="tire_pressure_rear_right",
+        native_unit_of_measurement=UnitOfPressure.BAR,
+        device_class=SensorDeviceClass.PRESSURE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="speed",
+        translation_key="speed",
+        native_unit_of_measurement=UnitOfSpeed.KILOMETERS_PER_HOUR,
+        device_class=SensorDeviceClass.SPEED,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+)
+
+BINARY_SENSOR_DESCRIPTIONS: tuple[BinarySensorEntityDescription, ...] = (
+    BinarySensorEntityDescription(
+        key="ignitionStatus",
+        translation_key="ignition",
+        device_class=BinarySensorDeviceClass.POWER,
+    ),
+    BinarySensorEntityDescription(
+        key="chargingStatus",
+        translation_key="charging",
+        device_class=BinarySensorDeviceClass.BATTERY_CHARGING,
+    ),
+    BinarySensorEntityDescription(
+        key="centralLockingStatus",
+        translation_key="central_locking",
+        device_class=BinarySensorDeviceClass.LOCK,
+    ),
+    BinarySensorEntityDescription(
+        key="doorFLStatus",
+        translation_key="door_front_left",
+        device_class=BinarySensorDeviceClass.DOOR,
+    ),
+    BinarySensorEntityDescription(
+        key="doorFRStatus",
+        translation_key="door_front_right",
+        device_class=BinarySensorDeviceClass.DOOR,
+    ),
+    BinarySensorEntityDescription(
+        key="doorRLStatus",
+        translation_key="door_rear_left",
+        device_class=BinarySensorDeviceClass.DOOR,
+    ),
+    BinarySensorEntityDescription(
+        key="trunkStatus",
+        translation_key="trunk",
+        device_class=BinarySensorDeviceClass.DOOR,
+    ),
+    BinarySensorEntityDescription(
+        key="hatchStatus",
+        translation_key="hatch",
+        device_class=BinarySensorDeviceClass.DOOR,
+    ),
+    BinarySensorEntityDescription(
+        key="climateStatus",
+        translation_key="climate",
+        device_class=BinarySensorDeviceClass.RUNNING,
+    ),
+    BinarySensorEntityDescription(
+        key="securityStatus",
+        translation_key="security",
+        device_class=BinarySensorDeviceClass.SAFETY,
+    ),
+    BinarySensorEntityDescription(
+        key="headLightsStatus",
+        translation_key="headlights",
+        device_class=BinarySensorDeviceClass.LIGHT,
+    ),
+    BinarySensorEntityDescription(
+        key="ready",
+        translation_key="ready",
+        device_class=BinarySensorDeviceClass.POWER,
+    ),
+    BinarySensorEntityDescription(
+        key="airingStatus",
+        translation_key="airing",
+        device_class=BinarySensorDeviceClass.OPENING,
+    ),
+    BinarySensorEntityDescription(
+        key="climateFWindowStatus",
+        translation_key="climate_front_window",
+        device_class=BinarySensorDeviceClass.RUNNING,
+    ),
+    BinarySensorEntityDescription(
+        key="mirrorsHeatingStatus",
+        translation_key="mirrors_heating",
+        device_class=BinarySensorDeviceClass.RUNNING,
+    ),
+    BinarySensorEntityDescription(
+        key="climateWheelHeatingStatus",
+        translation_key="wheel_heating",
+        device_class=BinarySensorDeviceClass.RUNNING,
+    ),
+    BinarySensorEntityDescription(
+        key="seatHeatingDriverStatus",
+        translation_key="seat_heating_driver",
+        device_class=BinarySensorDeviceClass.RUNNING,
+    ),
+    BinarySensorEntityDescription(
+        key="seatHeatingFPassStatus",
+        translation_key="seat_heating_front_passenger",
+        device_class=BinarySensorDeviceClass.RUNNING,
+    ),
+    BinarySensorEntityDescription(
+        key="seatHeatingRLPassStatus",
+        translation_key="seat_heating_rear_left",
+        device_class=BinarySensorDeviceClass.RUNNING,
+    ),
+    BinarySensorEntityDescription(
+        key="seatHeatingRRPassStatus",
+        translation_key="seat_heating_rear_right",
+        device_class=BinarySensorDeviceClass.RUNNING,
+    ),
+)
