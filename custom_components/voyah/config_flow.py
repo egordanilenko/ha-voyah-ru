@@ -7,7 +7,8 @@ from typing import Any
 
 import voluptuous as vol
 
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+from homeassistant.config_entries import ConfigFlow
+from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import VoyahApiAuthError, VoyahApiClient, VoyahApiConnectionError, VoyahApiError
@@ -41,7 +42,7 @@ class VoyahConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_user(
         self,
         user_input: dict[str, Any] | None = None,
-    ) -> ConfigFlowResult:
+    ) -> FlowResult:
         """Step 1: enter phone number and request SMS."""
         errors: dict[str, str] = {}
 
@@ -72,7 +73,7 @@ class VoyahConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_code(
         self,
         user_input: dict[str, Any] | None = None,
-    ) -> ConfigFlowResult:
+    ) -> FlowResult:
         """Step 2: enter SMS code."""
         errors: dict[str, str] = {}
 
@@ -128,7 +129,7 @@ class VoyahConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_organization(
         self,
         user_input: dict[str, Any] | None = None,
-    ) -> ConfigFlowResult:
+    ) -> FlowResult:
         """Step 3 (optional): select organization."""
         errors: dict[str, str] = {}
 
@@ -161,7 +162,7 @@ class VoyahConfigFlow(ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
-    async def _async_load_cars(self) -> ConfigFlowResult:
+    async def _async_load_cars(self) -> FlowResult:
         """Fetch car list and proceed to car selection."""
         session = async_get_clientsession(self.hass)
         self._cars = await VoyahApiClient.async_search_cars(
@@ -180,7 +181,7 @@ class VoyahConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_car(
         self,
         user_input: dict[str, Any] | None = None,
-    ) -> ConfigFlowResult:
+    ) -> FlowResult:
         """Step 4: select a car."""
         if user_input is not None:
             car_id = user_input["car"]
@@ -202,7 +203,7 @@ class VoyahConfigFlow(ConfigFlow, domain=DOMAIN):
             ),
         )
 
-    async def _async_create_entry(self, car: dict[str, Any]) -> ConfigFlowResult:
+    async def _async_create_entry(self, car: dict[str, Any]) -> FlowResult:
         """Create the config entry for a selected car."""
         car_id = car.get("_id", car.get("id"))
         car_name = _car_label(car)
