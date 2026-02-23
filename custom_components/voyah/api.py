@@ -125,6 +125,12 @@ class VoyahApiClient:
             "GET", f"/car-service/car/v2/{self._car_id}"
         )
         _LOGGER.debug("Raw API response keys: %s", list(raw.keys()) if raw else None)
+        sensors_source = raw.get("liveSensors") or raw.get("sensors")
+        _LOGGER.debug(
+            "Sensors source type=%s, keys=%s",
+            type(sensors_source).__name__ if sensors_source else None,
+            list(sensors_source.keys()) if isinstance(sensors_source, dict) else None,
+        )
         parsed = self._parse(raw)
         _LOGGER.debug(
             "Parsed data: sensors_data keys=%s, time=%s",
@@ -136,7 +142,7 @@ class VoyahApiClient:
     @staticmethod
     def _parse(raw: dict[str, Any]) -> dict[str, Any]:
         """Extract relevant fields from the raw API response."""
-        sensors = raw.get("sensors", {})
+        sensors = raw.get("liveSensors") or raw.get("sensors") or {}
         sensors_data: dict[str, Any] = sensors.get("sensorsData", {})
         position_data: dict[str, Any] = sensors.get("positionData", {})
         timestamp: int | None = sensors.get("time")
