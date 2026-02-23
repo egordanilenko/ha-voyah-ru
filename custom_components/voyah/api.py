@@ -120,31 +120,27 @@ class VoyahApiClient:
             return False
 
     async def async_get_car_data(self) -> dict[str, Any]:
-        """Fetch vehicle data from the API."""
-        raw = await self._request(
-            "GET", f"/car-service/car/v2/{self._car_id}"
+        """Fetch vehicle data via search endpoint (returns full sensor data)."""
+        resp = await self._request(
+            "POST",
+            "/car-service/car/v2/search",
+            json_data={"addSensors": True, "filters": {"_id": self._car_id}},
         )
-        _LOGGER.debug("Raw API response keys: %s", list(raw.keys()) if raw else None)
-        sensors_source = raw.get("liveSensors") or raw.get("sensors")
+        rows = resp.get("rows", [])
+        if not rows:
+            raise VoyahApiError(f"Car {self._car_id} not found in search results")
+        raw = rows[0]
         _LOGGER.debug(
-            "Sensors source type=%s, keys=%s",
-            type(sensors_source).__name__ if sensors_source else None,
-            list(sensors_source.keys()) if isinstance(sensors_source, dict) else None,
+            "Car data keys: %s, has sensors: %s",
+            list(raw.keys()),
+            "sensors" in raw,
         )
-        parsed = self._parse(raw)
-        _LOGGER.debug(
-            "Parsed data: sensors_data keys=%s, time=%s",
-            list(parsed.get("sensors_data", {}).keys()),
-            parsed.get("time"),
-        )
-        return parsed
+        return self._parse(raw)
 
     @staticmethod
     def _parse(raw: dict[str, Any]) -> dict[str, Any]:
         """Extract relevant fields from the raw API response."""
-        live = raw.get("liveSensors")
-        _LOGGER.debug("liveSensors type=%s value=%s", type(live).__name__ if live is not None else "None", live)
-        sensors = live or raw.get("sensors") or {}
+        sensors = raw.get("sensors") or {}
         sensors_data: dict[str, Any] = sensors.get("sensorsData", {})
         position_data: dict[str, Any] = sensors.get("positionData", {})
         timestamp: int | None = sensors.get("time")
@@ -152,6 +148,11 @@ class VoyahApiClient:
         if position_data.get("speed") is not None:
             sensors_data["speed"] = position_data["speed"]
 
+        _LOGGER.debug(
+            "Parsed: %d sensor keys, time=%s",
+            len(sensors_data),
+            timestamp,
+        )
         return {
             "sensors_data": sensors_data,
             "position_data": position_data,
