@@ -124,12 +124,15 @@ class VoyahApiClient:
         resp = await self._request(
             "POST",
             "/car-service/car/v2/search",
-            json_data={"addSensors": True, "filters": {"_id": self._car_id}},
+            json_data={"addSensors": True},
         )
         rows = resp.get("rows", [])
-        if not rows:
+        raw = next(
+            (r for r in rows if r.get("_id") == self._car_id),
+            rows[0] if rows else None,
+        )
+        if not raw:
             raise VoyahApiError(f"Car {self._car_id} not found in search results")
-        raw = rows[0]
         _LOGGER.debug(
             "Car data keys: %s, has sensors: %s",
             list(raw.keys()),
