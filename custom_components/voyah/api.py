@@ -142,7 +142,9 @@ class VoyahApiClient:
     @staticmethod
     def _parse(raw: dict[str, Any]) -> dict[str, Any]:
         """Extract relevant fields from the raw API response."""
-        sensors = raw.get("liveSensors") or raw.get("sensors") or {}
+        live = raw.get("liveSensors")
+        _LOGGER.debug("liveSensors type=%s value=%s", type(live).__name__ if live is not None else "None", live)
+        sensors = live or raw.get("sensors") or {}
         sensors_data: dict[str, Any] = sensors.get("sensorsData", {})
         position_data: dict[str, Any] = sensors.get("positionData", {})
         timestamp: int | None = sensors.get("time")
