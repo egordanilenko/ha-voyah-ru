@@ -2,6 +2,8 @@
 
 Custom integration for [Home Assistant](https://www.home-assistant.io/) that connects to the [Voyah Assist](https://app.voyahassist.ru) cloud service to monitor Voyah vehicle telemetry.
 
+![Home Assistant screenshot](docs/ha-screenshot.png)
+
 ## Features
 
 ### Sensors
@@ -41,6 +43,12 @@ Custom integration for [Home Assistant](https://www.home-assistant.io/) that con
 | Mirrors heating | Mirror heating active |
 | Wheel heating | Steering wheel heating active |
 | Seat heating (driver, passenger, rear L/R) | Individual seat heating |
+
+### History Charts
+
+| Battery charge | 12V battery voltage | Odometer |
+|---|---|---|
+| ![Battery](docs/bat-chart.png) | ![12V Battery](docs/12v-bat.png) | ![Odometer](docs/odo-chart.png) |
 
 ## Installation
 
