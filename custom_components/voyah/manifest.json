@@ -6,6 +6,7 @@
     "dependencies": [],
     "documentation": "https://github.com/egordanilenko/ha-voyah-ru",
     "iot_class": "cloud_polling",
+    "issue_tracker": "https://github.com/egordanilenko/ha-voyah-ru/issues",
     "requirements": ["aiohttp>=3.8.0"],
     "version": "0.1.0"
 }
