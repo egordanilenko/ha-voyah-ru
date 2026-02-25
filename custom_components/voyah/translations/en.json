@@ -63,6 +63,9 @@
             "tire_pressure_rear_right": { "name": "Tire pressure rear right" },
             "speed": { "name": "Speed" }
         },
+        "device_tracker": {
+            "location": { "name": "Location" }
+        },
         "binary_sensor": {
             "ignition": { "name": "Ignition" },
             "charging": { "name": "Charging" },
