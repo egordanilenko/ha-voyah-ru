@@ -24,6 +24,12 @@ Custom integration for [Home Assistant](https://www.home-assistant.io/) that con
 | Tire pressure (FL, FR, RL, RR) | bar | Individual tire pressures |
 | Speed | km/h | Current vehicle speed |
 
+### Device Tracker
+
+The integration creates a `device_tracker` entity that shows your car's position on the Home Assistant map. GPS data is updated on every polling interval.
+
+**Extra attributes:** course (heading), altitude, satellites, hdop (GPS precision).
+
 ### Binary Sensors
 
 | Sensor | Description |
