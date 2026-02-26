@@ -119,6 +119,14 @@ class VoyahApiClient:
             _LOGGER.warning("Token refresh request failed: %s", err)
             return False
 
+    async def async_start_heating(self) -> dict[str, Any]:
+        """Send a command to start cabin heating."""
+        return await self._request(
+            "POST",
+            f"/car-service/tbox/{self._car_id}/heating",
+            json_data={},
+        )
+
     async def async_get_car_data(self) -> dict[str, Any]:
         """Fetch full telemetry from the tbox endpoint."""
         raw = await self._request(

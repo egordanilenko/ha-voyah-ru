@@ -66,6 +66,9 @@
         "device_tracker": {
             "location": { "name": "Location" }
         },
+        "button": {
+            "start_heating": { "name": "Start heating" }
+        },
         "binary_sensor": {
             "ignition": { "name": "Ignition" },
             "charging": { "name": "Charging" },
