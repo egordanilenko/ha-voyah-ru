@@ -26,9 +26,16 @@ Custom integration for [Home Assistant](https://www.home-assistant.io/) that con
 
 ### Device Tracker
 
-The integration creates a `device_tracker` entity that shows your car's position on the Home Assistant map. GPS data is updated on every polling interval.
+The integration creates a `device_tracker` entity that shows your car's position on the Home Assistant map. GPS coordinates are updated on every polling interval.
 
-**Extra attributes:** course (heading), altitude, satellites, hdop (GPS precision).
+| Attribute | Description |
+|---|---|
+| Latitude / Longitude | Vehicle GPS position (shown on the map) |
+| Course | Heading in degrees (0–360) |
+| Altitude | Elevation above sea level (meters) |
+| Satellites | Number of GPS satellites in use |
+| HDOP | Horizontal dilution of precision |
+| Location accuracy | Estimated accuracy in meters (derived from HDOP) |
 
 ### Binary Sensors
 
