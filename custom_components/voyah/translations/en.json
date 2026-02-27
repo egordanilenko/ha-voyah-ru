@@ -61,10 +61,14 @@
             "tire_pressure_front_right": { "name": "Tire pressure front right" },
             "tire_pressure_rear_left": { "name": "Tire pressure rear left" },
             "tire_pressure_rear_right": { "name": "Tire pressure rear right" },
-            "speed": { "name": "Speed" }
+            "speed": { "name": "Speed" },
+            "charging_end_time": { "name": "Estimated charging end time" }
         },
         "device_tracker": {
             "location": { "name": "Location" }
+        },
+        "button": {
+            "start_heating": { "name": "Start heating" }
         },
         "binary_sensor": {
             "ignition": { "name": "Ignition" },
