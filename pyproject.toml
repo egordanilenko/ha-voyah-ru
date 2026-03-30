@@ -30,7 +30,6 @@ select = [
   "DTZ004", # Use datetime.fromtimestamp(ts, tz=) instead of datetime.utcfromtimestamp(ts)
   "E",      # pycodestyle
   "F",      # pyflakes/autoflake
-  "F541",   # f-string without any placeholders
   "FLY",    # flynt
   "FURB",   # refurb
   "G",      # flake8-logging-format
@@ -47,7 +46,6 @@ select = [
   "PL",     # pylint
   "PT",     # flake8-pytest-style
   "PTH",    # flake8-pathlib
-  "PYI",    # flake8-pyi
   "RET",    # flake8-return
   "RSE",    # flake8-raise
   "RUF005", # Consider iterable unpacking instead of concatenation
@@ -93,15 +91,12 @@ select = [
   "S609",   # unix-command-wildcard-injection
   "SIM",    # flake8-simplify
   "SLF",    # flake8-self
-  "SLOT",   # flake8-slots
   "T100",   # Trace found: {name} used
   "T20",    # flake8-print
   "TC",     # flake8-type-checking
   "TID",    # Tidy imports
   "TRY",    # tryceratops
   "UP",     # pyupgrade
-  "UP031",  # Use format specifiers instead of percent format
-  "UP032",  # Use f-string instead of `format` call
   "W",      # pycodestyle
 ]
 
@@ -141,10 +136,6 @@ ignore = [
   "TRY003", # Avoid specifying long messages outside the exception class
   "TRY400", # Use `logging.exception` instead of `logging.error`
 
-  "UP046", # Non PEP 695 generic class
-  "UP047", # Non PEP 696 generic function
-  "UP049", # Avoid private type parameter names
-
   # May conflict with the formatter, https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
   "W191",
   "E111",
@@ -183,7 +174,7 @@ split-on-trailing-comma = false
 [tool.ruff.lint.per-file-ignores]
 # PTH (pathlib) — as in HA core, not enforced yet
 "custom_components/**" = ["PTH"]
-"tests/**" = ["PTH", "T20"]
+"tests/**" = ["PTH", "T20", "SLF001"]
 # CLI helper — intentional use of print() for user output
 "setup_auth.py" = ["T20"]
 
