@@ -27,9 +27,7 @@ async def async_setup_entry(
     async_add_entities([VoyahStartHeatingButton(coordinator, entry)])
 
 
-class VoyahStartHeatingButton(
-    CoordinatorEntity[VoyahDataUpdateCoordinator], ButtonEntity
-):
+class VoyahStartHeatingButton(CoordinatorEntity[VoyahDataUpdateCoordinator], ButtonEntity):
     """Button to start cabin heating."""
 
     _attr_has_entity_name = True

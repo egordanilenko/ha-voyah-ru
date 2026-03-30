@@ -57,17 +57,12 @@ class VoyahDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         new_access = self.client.access_token
         new_refresh = self.client.refresh_token
 
-        if (
-            new_access != self._last_access_token
-            or new_refresh != self._last_refresh_token
-        ):
+        if new_access != self._last_access_token or new_refresh != self._last_refresh_token:
             self._last_access_token = new_access
             self._last_refresh_token = new_refresh
 
             new_data = {**self._entry.data}
             new_data[CONF_ACCESS_TOKEN] = new_access
             new_data[CONF_REFRESH_TOKEN] = new_refresh
-            self.hass.config_entries.async_update_entry(
-                self._entry, data=new_data
-            )
+            self.hass.config_entries.async_update_entry(self._entry, data=new_data)
             _LOGGER.debug("Persisted refreshed tokens to config entry")

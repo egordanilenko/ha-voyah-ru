@@ -8,14 +8,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import VoyahApiClient
-from .const import (
-    CONF_ACCESS_TOKEN,
-    CONF_CAR_ID,
-    CONF_REFRESH_TOKEN,
-    CONF_SCAN_INTERVAL,
-    DEFAULT_SCAN_INTERVAL,
-    DOMAIN,
-)
+from .const import CONF_ACCESS_TOKEN, CONF_CAR_ID, CONF_REFRESH_TOKEN, CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL, DOMAIN
 from .coordinator import VoyahDataUpdateCoordinator
 
 PLATFORMS: list[Platform] = [

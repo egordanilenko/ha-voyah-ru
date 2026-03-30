@@ -2,15 +2,8 @@
 
 from __future__ import annotations
 
-from homeassistant.components.binary_sensor import (
-    BinarySensorDeviceClass,
-    BinarySensorEntityDescription,
-)
-from homeassistant.components.sensor import (
-    SensorDeviceClass,
-    SensorEntityDescription,
-    SensorStateClass,
-)
+from homeassistant.components.binary_sensor import BinarySensorDeviceClass, BinarySensorEntityDescription
+from homeassistant.components.sensor import SensorDeviceClass, SensorEntityDescription, SensorStateClass
 from homeassistant.const import (
     PERCENTAGE,
     UnitOfElectricPotential,

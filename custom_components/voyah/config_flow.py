@@ -5,11 +5,10 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-import voluptuous as vol
-
 from homeassistant.config_entries import ConfigFlow
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+import voluptuous as vol
 
 from .api import VoyahApiAuthError, VoyahApiClient, VoyahApiConnectionError, VoyahApiError
 from .const import (
@@ -64,9 +63,7 @@ class VoyahConfigFlow(ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="user",
-            data_schema=vol.Schema(
-                {vol.Required(CONF_PHONE): str}
-            ),
+            data_schema=vol.Schema({vol.Required(CONF_PHONE): str}),
             errors=errors,
         )
 
@@ -82,9 +79,7 @@ class VoyahConfigFlow(ConfigFlow, domain=DOMAIN):
             session = async_get_clientsession(self.hass)
 
             try:
-                auth_data = await VoyahApiClient.async_sign_in(
-                    session, self._phone, code
-                )
+                auth_data = await VoyahApiClient.async_sign_in(session, self._phone, code)
             except VoyahApiAuthError:
                 errors["base"] = "invalid_code"
             except (VoyahApiConnectionError, VoyahApiError):
@@ -96,9 +91,7 @@ class VoyahConfigFlow(ConfigFlow, domain=DOMAIN):
                 self._access_token = auth_data["accessToken"]
                 self._refresh_token = auth_data["refreshToken"]
 
-                orgs = await VoyahApiClient.async_get_organizations(
-                    session, self._access_token
-                )
+                orgs = await VoyahApiClient.async_get_organizations(session, self._access_token)
                 if len(orgs) > 1:
                     self._organizations = orgs
                     return await self.async_step_organization()
@@ -106,9 +99,7 @@ class VoyahConfigFlow(ConfigFlow, domain=DOMAIN):
                 if len(orgs) == 1:
                     org_id = orgs[0].get("_id", orgs[0].get("id"))
                     try:
-                        org_auth = await VoyahApiClient.async_sign_in_org(
-                            session, self._access_token, org_id
-                        )
+                        org_auth = await VoyahApiClient.async_sign_in_org(session, self._access_token, org_id)
                         if "accessToken" in org_auth:
                             self._access_token = org_auth["accessToken"]
                             self._refresh_token = org_auth["refreshToken"]
@@ -119,9 +110,7 @@ class VoyahConfigFlow(ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="code",
-            data_schema=vol.Schema(
-                {vol.Required("code"): str}
-            ),
+            data_schema=vol.Schema({vol.Required("code"): str}),
             errors=errors,
             description_placeholders={"phone": self._phone},
         )
@@ -138,9 +127,7 @@ class VoyahConfigFlow(ConfigFlow, domain=DOMAIN):
             session = async_get_clientsession(self.hass)
 
             try:
-                org_auth = await VoyahApiClient.async_sign_in_org(
-                    session, self._access_token, org_id
-                )
+                org_auth = await VoyahApiClient.async_sign_in_org(session, self._access_token, org_id)
             except VoyahApiError:
                 errors["base"] = "cannot_connect"
             else:
@@ -150,24 +137,19 @@ class VoyahConfigFlow(ConfigFlow, domain=DOMAIN):
                 return await self._async_load_cars()
 
         org_options = {
-            org.get("_id", org.get("id")): org.get("name", org.get("_id", "?"))
-            for org in self._organizations
+            org.get("_id", org.get("id")): org.get("name", org.get("_id", "?")) for org in self._organizations
         }
 
         return self.async_show_form(
             step_id="organization",
-            data_schema=vol.Schema(
-                {vol.Required("organization"): vol.In(org_options)}
-            ),
+            data_schema=vol.Schema({vol.Required("organization"): vol.In(org_options)}),
             errors=errors,
         )
 
     async def _async_load_cars(self) -> FlowResult:
         """Fetch car list and proceed to car selection."""
         session = async_get_clientsession(self.hass)
-        self._cars = await VoyahApiClient.async_search_cars(
-            session, self._access_token
-        )
+        self._cars = await VoyahApiClient.async_search_cars(session, self._access_token)
 
         if not self._cars:
             return self.async_abort(reason="no_cars")
@@ -191,16 +173,11 @@ class VoyahConfigFlow(ConfigFlow, domain=DOMAIN):
             )
             return await self._async_create_entry(car)
 
-        car_options = {
-            car.get("_id", car.get("id")): _car_label(car)
-            for car in self._cars
-        }
+        car_options = {car.get("_id", car.get("id")): _car_label(car) for car in self._cars}
 
         return self.async_show_form(
             step_id="car",
-            data_schema=vol.Schema(
-                {vol.Required("car"): vol.In(car_options)}
-            ),
+            data_schema=vol.Schema({vol.Required("car"): vol.In(car_options)}),
         )
 
     async def _async_create_entry(self, car: dict[str, Any]) -> FlowResult:

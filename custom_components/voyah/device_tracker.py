@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from homeassistant.components.device_tracker.config_entry import TrackerEntity
 from homeassistant.components.device_tracker import SourceType
+from homeassistant.components.device_tracker.config_entry import TrackerEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
@@ -29,9 +29,7 @@ async def async_setup_entry(
         async_add_entities([VoyahDeviceTracker(coordinator, entry)])
 
 
-class VoyahDeviceTracker(
-    CoordinatorEntity[VoyahDataUpdateCoordinator], TrackerEntity
-):
+class VoyahDeviceTracker(CoordinatorEntity[VoyahDataUpdateCoordinator], TrackerEntity):
     """Voyah vehicle GPS tracker."""
 
     _attr_has_entity_name = True
