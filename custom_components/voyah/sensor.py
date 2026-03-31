@@ -6,11 +6,7 @@ from collections import deque
 from datetime import datetime, timedelta, timezone
 import logging
 
-from homeassistant.components.sensor import (
-    SensorDeviceClass,
-    SensorEntity,
-    SensorEntityDescription,
-)
+from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorEntityDescription
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
@@ -83,9 +79,7 @@ class VoyahSensorEntity(CoordinatorEntity[VoyahDataUpdateCoordinator], SensorEnt
         return sensors_data.get(self.entity_description.key)
 
 
-class VoyahChargingEndTimeSensor(
-    CoordinatorEntity[VoyahDataUpdateCoordinator], SensorEntity
-):
+class VoyahChargingEndTimeSensor(CoordinatorEntity[VoyahDataUpdateCoordinator], SensorEntity):
     """Estimates charging completion time assuming linear charge rate."""
 
     _attr_has_entity_name = True
@@ -107,9 +101,7 @@ class VoyahChargingEndTimeSensor(
             manufacturer="Voyah",
         )
 
-        self._pct_history: deque[tuple[float, float]] = deque(
-            maxlen=RATE_WINDOW_POINTS
-        )
+        self._pct_history: deque[tuple[float, float]] = deque(maxlen=RATE_WINDOW_POINTS)
         self._last_seen_pct: float | None = None
         self._cached_end_time: datetime | None = None
         self._was_charging: bool = False
@@ -158,9 +150,7 @@ class VoyahChargingEndTimeSensor(
         rate = delta_pct / delta_time  # percent per second
         remaining_pct = TARGET_BATTERY_PCT - newest_pct
         remaining_seconds = remaining_pct / rate
-        end_time = datetime.now(tz=timezone.utc) + timedelta(
-            seconds=remaining_seconds
-        )
+        end_time = datetime.now(tz=timezone.utc) + timedelta(seconds=remaining_seconds)
 
         _LOGGER.debug(
             "Charge estimate: window=%s pts (%s%%..%s%%), "
@@ -200,9 +190,7 @@ class VoyahChargingEndTimeSensor(
             self._cached_end_time = None
             if pct is not None and api_time is not None:
                 self._pct_history.append((pct, api_time))
-            _LOGGER.debug(
-                "Charging started: pct=%s, time=%s", pct, api_time
-            )
+            _LOGGER.debug("Charging started: pct=%s, time=%s", pct, api_time)
         else:
             current_pct = sensors.get("batteryPercentage")
             if current_pct is not None and current_pct != self._last_seen_pct:

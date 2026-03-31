@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-from homeassistant.components.binary_sensor import (
-    BinarySensorEntity,
-    BinarySensorEntityDescription,
-)
+from homeassistant.components.binary_sensor import BinarySensorEntity, BinarySensorEntityDescription
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
@@ -31,9 +28,7 @@ async def async_setup_entry(
     )
 
 
-class VoyahBinarySensorEntity(
-    CoordinatorEntity[VoyahDataUpdateCoordinator], BinarySensorEntity
-):
+class VoyahBinarySensorEntity(CoordinatorEntity[VoyahDataUpdateCoordinator], BinarySensorEntity):
     """Representation of a Voyah binary sensor."""
 
     _attr_has_entity_name = True

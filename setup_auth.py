@@ -50,7 +50,7 @@ def _request(
         try:
             raw = exc.read().decode()
             payload = json.loads(raw) if raw.strip() else {"message": exc.reason}
-        except Exception:
+        except Exception:  # noqa: BLE001
             payload = {"message": exc.reason}
         return exc.code, payload
 

@@ -63,9 +63,7 @@ class VoyahApiClient:
         """Send an authenticated request, refreshing the token on 401."""
         url = f"{API_BASE_URL}{path}"
         try:
-            async with self._session.request(
-                method, url, headers=self._headers(), json=json_data
-            ) as resp:
+            async with self._session.request(method, url, headers=self._headers(), json=json_data) as resp:
                 if resp.status == 401:
                     refreshed = await self._refresh_access_token()
                     if not refreshed:
@@ -76,9 +74,7 @@ class VoyahApiClient:
                         if retry_resp.status == 401:
                             raise VoyahApiAuthError("Authentication failed")
                         if retry_resp.status != 200:
-                            raise VoyahApiError(
-                                f"Unexpected status: {retry_resp.status}"
-                            )
+                            raise VoyahApiError(f"Unexpected status: {retry_resp.status}")
                         return await retry_resp.json()
 
                 if resp.status != 200:
@@ -86,9 +82,7 @@ class VoyahApiClient:
                 return await resp.json()
 
         except aiohttp.ClientError as err:
-            raise VoyahApiConnectionError(
-                f"Error communicating with API: {err}"
-            ) from err
+            raise VoyahApiConnectionError(f"Error communicating with API: {err}") from err
 
     async def _refresh_access_token(self) -> bool:
         """Use refresh_token to obtain a new access_token pair."""
@@ -104,6 +98,10 @@ class VoyahApiClient:
                     return False
                 data = await resp.json()
 
+        except aiohttp.ClientError as err:
+            _LOGGER.warning("Token refresh request failed: %s", err)
+            return False
+        else:
             new_access = data.get("accessToken")
             new_refresh = data.get("refreshToken")
             if not new_access or not new_refresh:
@@ -114,10 +112,6 @@ class VoyahApiClient:
             self._refresh_token = new_refresh
             _LOGGER.debug("Access token refreshed successfully")
             return True
-
-        except aiohttp.ClientError as err:
-            _LOGGER.warning("Token refresh request failed: %s", err)
-            return False
 
     async def async_start_heating(self) -> dict[str, Any]:
         """Send a command to start cabin heating."""
@@ -163,9 +157,7 @@ class VoyahApiClient:
     # ── Auth helpers (used by config_flow, not during polling) ──
 
     @staticmethod
-    async def async_request_sms(
-        session: aiohttp.ClientSession, phone: str
-    ) -> None:
+    async def async_request_sms(session: aiohttp.ClientSession, phone: str) -> None:
         """Request an SMS verification code."""
         url = f"{API_BASE_URL}/id-service/auth/sign-up"
         async with session.post(
@@ -177,9 +169,7 @@ class VoyahApiClient:
                 raise VoyahApiConnectionError(f"Server error: {resp.status}")
 
     @staticmethod
-    async def async_sign_in(
-        session: aiohttp.ClientSession, phone: str, code: str
-    ) -> dict[str, Any]:
+    async def async_sign_in(session: aiohttp.ClientSession, phone: str, code: str) -> dict[str, Any]:
         """Verify SMS code and return token pair."""
         url = f"{API_BASE_URL}/id-service/auth/sign-in"
         async with session.post(
@@ -189,19 +179,13 @@ class VoyahApiClient:
         ) as resp:
             data = await resp.json()
             if resp.status == 403:
-                raise VoyahApiAuthError(
-                    data.get("message", "Invalid code")
-                )
+                raise VoyahApiAuthError(data.get("message", "Invalid code"))
             if resp.status != 200:
-                raise VoyahApiError(
-                    data.get("message", f"Sign-in failed: {resp.status}")
-                )
+                raise VoyahApiError(data.get("message", f"Sign-in failed: {resp.status}"))
             return data
 
     @staticmethod
-    async def async_get_organizations(
-        session: aiohttp.ClientSession, access_token: str
-    ) -> list[dict[str, Any]]:
+    async def async_get_organizations(session: aiohttp.ClientSession, access_token: str) -> list[dict[str, Any]]:
         """Fetch the list of organizations for the authenticated user."""
         url = f"{API_BASE_URL}/id-service/org/my"
         async with session.get(
@@ -219,9 +203,7 @@ class VoyahApiClient:
             return data.get("rows", data.get("items", []))
 
     @staticmethod
-    async def async_sign_in_org(
-        session: aiohttp.ClientSession, access_token: str, org_id: str
-    ) -> dict[str, Any]:
+    async def async_sign_in_org(session: aiohttp.ClientSession, access_token: str, org_id: str) -> dict[str, Any]:
         """Select an organization, returning updated tokens."""
         url = f"{API_BASE_URL}/id-service/org/sign-in"
         async with session.post(
@@ -235,15 +217,11 @@ class VoyahApiClient:
         ) as resp:
             data = await resp.json()
             if resp.status != 200:
-                raise VoyahApiError(
-                    data.get("message", f"Org sign-in failed: {resp.status}")
-                )
+                raise VoyahApiError(data.get("message", f"Org sign-in failed: {resp.status}"))
             return data
 
     @staticmethod
-    async def async_search_cars(
-        session: aiohttp.ClientSession, access_token: str
-    ) -> list[dict[str, Any]]:
+    async def async_search_cars(session: aiohttp.ClientSession, access_token: str) -> list[dict[str, Any]]:
         """Fetch available cars for the authenticated user."""
         url = f"{API_BASE_URL}/car-service/car/v2/search"
         async with session.post(
