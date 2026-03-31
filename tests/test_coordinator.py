@@ -2,10 +2,10 @@
 
 from unittest.mock import AsyncMock, MagicMock
 
-import pytest
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import UpdateFailed
+import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.voyah.api import VoyahApiAuthError, VoyahApiError

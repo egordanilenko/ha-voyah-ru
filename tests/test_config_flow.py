@@ -2,9 +2,9 @@
 
 from unittest.mock import patch
 
-import pytest
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
+import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.voyah.api import VoyahApiAuthError, VoyahApiConnectionError
@@ -28,9 +28,7 @@ def auto_enable_custom_integrations(enable_custom_integrations):
 
 async def test_user_step_shows_form(hass: HomeAssistant) -> None:
     """Initial step shows the phone number form."""
-    result = await hass.config_entries.flow.async_init(
-        DOMAIN, context={"source": "user"}
-    )
+    result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": "user"})
     assert result["type"] == FlowResultType.FORM
     assert result["step_id"] == "user"
 
@@ -41,12 +39,8 @@ async def test_user_step_connection_error(hass: HomeAssistant) -> None:
         "custom_components.voyah.config_flow.VoyahApiClient.async_request_sms",
         side_effect=VoyahApiConnectionError,
     ):
-        result = await hass.config_entries.flow.async_init(
-            DOMAIN, context={"source": "user"}
-        )
-        result = await hass.config_entries.flow.async_configure(
-            result["flow_id"], {"phone": MOCK_PHONE}
-        )
+        result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": "user"})
+        result = await hass.config_entries.flow.async_configure(result["flow_id"], {"phone": MOCK_PHONE})
     assert result["type"] == FlowResultType.FORM
     assert result["errors"]["base"] == "cannot_connect"
 
@@ -75,17 +69,11 @@ async def test_full_flow_single_org_single_car(hass: HomeAssistant) -> None:
             return_value=MOCK_CARS,
         ),
     ):
-        result = await hass.config_entries.flow.async_init(
-            DOMAIN, context={"source": "user"}
-        )
-        result = await hass.config_entries.flow.async_configure(
-            result["flow_id"], {"phone": MOCK_PHONE}
-        )
+        result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": "user"})
+        result = await hass.config_entries.flow.async_configure(result["flow_id"], {"phone": MOCK_PHONE})
         assert result["step_id"] == "code"
 
-        result = await hass.config_entries.flow.async_configure(
-            result["flow_id"], {"code": "123456"}
-        )
+        result = await hass.config_entries.flow.async_configure(result["flow_id"], {"code": "123456"})
 
     assert result["type"] == FlowResultType.CREATE_ENTRY
     assert result["data"]["car_id"] == MOCK_CAR_ID
@@ -98,20 +86,14 @@ async def test_code_step_invalid_code(hass: HomeAssistant) -> None:
         "custom_components.voyah.config_flow.VoyahApiClient.async_request_sms",
         return_value=None,
     ):
-        result = await hass.config_entries.flow.async_init(
-            DOMAIN, context={"source": "user"}
-        )
-        result = await hass.config_entries.flow.async_configure(
-            result["flow_id"], {"phone": MOCK_PHONE}
-        )
+        result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": "user"})
+        result = await hass.config_entries.flow.async_configure(result["flow_id"], {"phone": MOCK_PHONE})
 
     with patch(
         "custom_components.voyah.config_flow.VoyahApiClient.async_sign_in",
         side_effect=VoyahApiAuthError,
     ):
-        result = await hass.config_entries.flow.async_configure(
-            result["flow_id"], {"code": "000000"}
-        )
+        result = await hass.config_entries.flow.async_configure(result["flow_id"], {"code": "000000"})
 
     assert result["type"] == FlowResultType.FORM
     assert result["step_id"] == "code"
@@ -146,15 +128,9 @@ async def test_multiple_cars_shows_car_step(hass: HomeAssistant) -> None:
             return_value=cars,
         ),
     ):
-        result = await hass.config_entries.flow.async_init(
-            DOMAIN, context={"source": "user"}
-        )
-        result = await hass.config_entries.flow.async_configure(
-            result["flow_id"], {"phone": MOCK_PHONE}
-        )
-        result = await hass.config_entries.flow.async_configure(
-            result["flow_id"], {"code": "123456"}
-        )
+        result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": "user"})
+        result = await hass.config_entries.flow.async_configure(result["flow_id"], {"phone": MOCK_PHONE})
+        result = await hass.config_entries.flow.async_configure(result["flow_id"], {"code": "123456"})
 
     assert result["type"] == FlowResultType.FORM
     assert result["step_id"] == "car"
@@ -184,15 +160,9 @@ async def test_no_cars_aborts(hass: HomeAssistant) -> None:
             return_value=[],
         ),
     ):
-        result = await hass.config_entries.flow.async_init(
-            DOMAIN, context={"source": "user"}
-        )
-        result = await hass.config_entries.flow.async_configure(
-            result["flow_id"], {"phone": MOCK_PHONE}
-        )
-        result = await hass.config_entries.flow.async_configure(
-            result["flow_id"], {"code": "123456"}
-        )
+        result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": "user"})
+        result = await hass.config_entries.flow.async_configure(result["flow_id"], {"phone": MOCK_PHONE})
+        result = await hass.config_entries.flow.async_configure(result["flow_id"], {"code": "123456"})
 
     assert result["type"] == FlowResultType.ABORT
     assert result["reason"] == "no_cars"
@@ -229,15 +199,9 @@ async def test_duplicate_entry_aborts(hass: HomeAssistant) -> None:
             return_value=MOCK_CARS,
         ),
     ):
-        result = await hass.config_entries.flow.async_init(
-            DOMAIN, context={"source": "user"}
-        )
-        result = await hass.config_entries.flow.async_configure(
-            result["flow_id"], {"phone": MOCK_PHONE}
-        )
-        result = await hass.config_entries.flow.async_configure(
-            result["flow_id"], {"code": "123456"}
-        )
+        result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": "user"})
+        result = await hass.config_entries.flow.async_configure(result["flow_id"], {"phone": MOCK_PHONE})
+        result = await hass.config_entries.flow.async_configure(result["flow_id"], {"code": "123456"})
 
     assert result["type"] == FlowResultType.ABORT
     assert result["reason"] == "already_configured"

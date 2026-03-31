@@ -4,11 +4,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from custom_components.voyah.api import (
-    VoyahApiAuthError,
-    VoyahApiClient,
-    VoyahApiConnectionError,
-)
+from custom_components.voyah.api import VoyahApiAuthError, VoyahApiClient, VoyahApiConnectionError
 
 from .conftest import MOCK_ACCESS_TOKEN, MOCK_CAR_ID, MOCK_REFRESH_TOKEN
 
@@ -70,9 +66,7 @@ async def test_get_car_data_refreshes_token_on_401() -> None:
     raw = {"sensorsData": {"batteryPercentage": 50}, "positionData": {}, "time": 0}
     resp_401 = _mock_response(401, {})
     resp_ok = _mock_response(200, raw)
-    refresh_resp = _mock_response(
-        200, {"accessToken": "new-access", "refreshToken": "new-refresh"}
-    )
+    refresh_resp = _mock_response(200, {"accessToken": "new-access", "refreshToken": "new-refresh"})
 
     session = MagicMock()
     session.request = MagicMock(side_effect=[resp_401, resp_ok])

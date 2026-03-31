@@ -15,6 +15,7 @@ from custom_components.voyah.const import (
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
 )
+from custom_components.voyah.coordinator import VoyahDataUpdateCoordinator
 
 MOCK_CAR_ID = "car-abc123"
 MOCK_PHONE = "79001234567"
@@ -84,8 +85,6 @@ MOCK_CAR_DATA = {
 
 def make_coordinator(hass: HomeAssistant, data: dict):
     """Create a VoyahDataUpdateCoordinator with pre-set data."""
-    from custom_components.voyah.coordinator import VoyahDataUpdateCoordinator
-
     entry = MockConfigEntry(domain=DOMAIN, data=MOCK_CONFIG_DATA)
     entry.add_to_hass(hass)
     coordinator = VoyahDataUpdateCoordinator(hass, MagicMock(), entry, update_interval=60)
@@ -98,5 +97,3 @@ def make_config_entry(hass: HomeAssistant) -> MockConfigEntry:
     entry = MockConfigEntry(domain=DOMAIN, data=MOCK_CONFIG_DATA)
     entry.add_to_hass(hass)
     return entry
-
-

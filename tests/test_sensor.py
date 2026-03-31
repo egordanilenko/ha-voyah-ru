@@ -2,30 +2,23 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-
+from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
+from homeassistant.core import HomeAssistant
 import time_machine
 
-import pytest
-from homeassistant.core import HomeAssistant
-
-from custom_components.voyah.sensor import (
-    VoyahChargingEndTimeSensor,
-    VoyahSensorEntity,
-)
+from custom_components.voyah.const import SENSOR_DESCRIPTIONS
+from custom_components.voyah.sensor import RATE_WINDOW_POINTS, VoyahChargingEndTimeSensor, VoyahSensorEntity
 
 from .conftest import MOCK_CAR_DATA, make_config_entry, make_coordinator
 
-
 # ── VoyahSensorEntity ────────────────────────────────────────────────────────
+
 
 async def test_sensor_returns_value(hass: HomeAssistant) -> None:
     """Sensor reads value from coordinator data."""
-    from custom_components.voyah.const import SENSOR_DESCRIPTIONS
-
-    coordinator = make_coordinator(hass,MOCK_CAR_DATA)
+    coordinator = make_coordinator(hass, MOCK_CAR_DATA)
     entry = make_config_entry(hass)
     desc = next(d for d in SENSOR_DESCRIPTIONS if d.key == "batteryPercentage")
     sensor = VoyahSensorEntity(coordinator, desc, entry)
@@ -34,10 +27,8 @@ async def test_sensor_returns_value(hass: HomeAssistant) -> None:
 
 async def test_sensor_returns_none_for_missing_key(hass: HomeAssistant) -> None:
     """Sensor returns None when key absent from data."""
-    from custom_components.voyah.const import SENSOR_DESCRIPTIONS
-
     data = {**MOCK_CAR_DATA, "sensors_data": {}}
-    coordinator = make_coordinator(hass,data)
+    coordinator = make_coordinator(hass, data)
     entry = make_config_entry(hass)
     desc = next(d for d in SENSOR_DESCRIPTIONS if d.key == "batteryPercentage")
     sensor = VoyahSensorEntity(coordinator, desc, entry)
@@ -46,13 +37,14 @@ async def test_sensor_returns_none_for_missing_key(hass: HomeAssistant) -> None:
 
 # ── VoyahChargingEndTimeSensor — init ────────────────────────────────────────
 
+
 async def test_charging_sensor_not_charging_on_init(hass: HomeAssistant) -> None:
     """No end time when not charging at init."""
     data = {
         **MOCK_CAR_DATA,
         "sensors_data": {**MOCK_CAR_DATA["sensors_data"], "chargingStatus": 0},
     }
-    coordinator = make_coordinator(hass,data)
+    coordinator = make_coordinator(hass, data)
     entry = make_config_entry(hass)
     sensor = VoyahChargingEndTimeSensor(coordinator, entry)
 
@@ -67,7 +59,7 @@ async def test_charging_sensor_seeds_history_on_init_if_charging(hass: HomeAssis
         "sensors_data": {**MOCK_CAR_DATA["sensors_data"], "chargingStatus": 1, "batteryPercentage": 60},
         "time": 1000,
     }
-    coordinator = make_coordinator(hass,data)
+    coordinator = make_coordinator(hass, data)
     entry = make_config_entry(hass)
     sensor = VoyahChargingEndTimeSensor(coordinator, entry)
 
@@ -78,9 +70,10 @@ async def test_charging_sensor_seeds_history_on_init_if_charging(hass: HomeAssis
 
 # ── VoyahChargingEndTimeSensor — _compute_end_time ───────────────────────────
 
+
 async def test_compute_end_time_returns_none_with_one_point(hass: HomeAssistant) -> None:
     """No estimate with only one data point."""
-    coordinator = make_coordinator(hass,MOCK_CAR_DATA)
+    coordinator = make_coordinator(hass, MOCK_CAR_DATA)
     entry = make_config_entry(hass)
     sensor = VoyahChargingEndTimeSensor(coordinator, entry)
     sensor._pct_history.append((50, 1000))
@@ -90,7 +83,7 @@ async def test_compute_end_time_returns_none_with_one_point(hass: HomeAssistant)
 
 async def test_compute_end_time_returns_none_at_100_pct(hass: HomeAssistant) -> None:
     """No estimate when already at 100%."""
-    coordinator = make_coordinator(hass,MOCK_CAR_DATA)
+    coordinator = make_coordinator(hass, MOCK_CAR_DATA)
     entry = make_config_entry(hass)
     sensor = VoyahChargingEndTimeSensor(coordinator, entry)
     sensor._pct_history.append((99, 1000))
@@ -101,7 +94,7 @@ async def test_compute_end_time_returns_none_at_100_pct(hass: HomeAssistant) -> 
 
 async def test_compute_end_time_returns_none_when_rate_zero(hass: HomeAssistant) -> None:
     """No estimate when percentage did not change (rate = 0)."""
-    coordinator = make_coordinator(hass,MOCK_CAR_DATA)
+    coordinator = make_coordinator(hass, MOCK_CAR_DATA)
     entry = make_config_entry(hass)
     sensor = VoyahChargingEndTimeSensor(coordinator, entry)
     sensor._pct_history.append((50, 1000))
@@ -112,7 +105,7 @@ async def test_compute_end_time_returns_none_when_rate_zero(hass: HomeAssistant)
 
 async def test_compute_end_time_returns_none_when_delta_time_zero(hass: HomeAssistant) -> None:
     """No estimate when timestamps are identical."""
-    coordinator = make_coordinator(hass,MOCK_CAR_DATA)
+    coordinator = make_coordinator(hass, MOCK_CAR_DATA)
     entry = make_config_entry(hass)
     sensor = VoyahChargingEndTimeSensor(coordinator, entry)
     sensor._pct_history.append((50, 1000))
@@ -123,7 +116,7 @@ async def test_compute_end_time_returns_none_when_delta_time_zero(hass: HomeAssi
 
 async def test_compute_end_time_returns_none_when_rate_negative(hass: HomeAssistant) -> None:
     """No estimate when percentage decreased (discharging)."""
-    coordinator = make_coordinator(hass,MOCK_CAR_DATA)
+    coordinator = make_coordinator(hass, MOCK_CAR_DATA)
     entry = make_config_entry(hass)
     sensor = VoyahChargingEndTimeSensor(coordinator, entry)
     sensor._pct_history.append((60, 1000))
@@ -134,8 +127,6 @@ async def test_compute_end_time_returns_none_when_rate_negative(hass: HomeAssist
 
 async def test_compute_end_time_happy_path(hass: HomeAssistant) -> None:
     """Returns the correct future datetime when charging at a steady rate."""
-    from datetime import timedelta
-
     coordinator = make_coordinator(hass, MOCK_CAR_DATA)
     entry = make_config_entry(hass)
     sensor = VoyahChargingEndTimeSensor(coordinator, entry)
@@ -152,6 +143,7 @@ async def test_compute_end_time_happy_path(hass: HomeAssistant) -> None:
 
 # ── VoyahChargingEndTimeSensor — _handle_coordinator_update ──────────────────
 
+
 async def test_update_starts_tracking_when_charging_begins(hass: HomeAssistant) -> None:
     """Tracking starts when chargingStatus transitions 0→1."""
     data = {
@@ -159,7 +151,7 @@ async def test_update_starts_tracking_when_charging_begins(hass: HomeAssistant) 
         "sensors_data": {**MOCK_CAR_DATA["sensors_data"], "chargingStatus": 0},
         "time": 1000,
     }
-    coordinator = make_coordinator(hass,data)
+    coordinator = make_coordinator(hass, data)
     entry = make_config_entry(hass)
     sensor = VoyahChargingEndTimeSensor(coordinator, entry)
     assert sensor._was_charging is False
@@ -183,7 +175,7 @@ async def test_update_resets_tracking_when_charging_stops(hass: HomeAssistant) -
         "sensors_data": {**MOCK_CAR_DATA["sensors_data"], "chargingStatus": 1, "batteryPercentage": 70},
         "time": 1000,
     }
-    coordinator = make_coordinator(hass,data)
+    coordinator = make_coordinator(hass, data)
     entry = make_config_entry(hass)
     sensor = VoyahChargingEndTimeSensor(coordinator, entry)
     sensor._was_charging = True
@@ -208,7 +200,7 @@ async def test_update_adds_point_and_recalculates_on_pct_change(hass: HomeAssist
         "sensors_data": {**MOCK_CAR_DATA["sensors_data"], "chargingStatus": 1, "batteryPercentage": 50},
         "time": 1000,
     }
-    coordinator = make_coordinator(hass,data)
+    coordinator = make_coordinator(hass, data)
     entry = make_config_entry(hass)
     sensor = VoyahChargingEndTimeSensor(coordinator, entry)
     # Clear history seeded by _init_tracking to start fresh
@@ -238,7 +230,7 @@ async def test_update_skips_recalculation_when_pct_unchanged(hass: HomeAssistant
         "sensors_data": {**MOCK_CAR_DATA["sensors_data"], "chargingStatus": 1, "batteryPercentage": 50},
         "time": 1000,
     }
-    coordinator = make_coordinator(hass,data)
+    coordinator = make_coordinator(hass, data)
     entry = make_config_entry(hass)
     sensor = VoyahChargingEndTimeSensor(coordinator, entry)
     sensor._was_charging = True
@@ -255,8 +247,6 @@ async def test_update_skips_recalculation_when_pct_unchanged(hass: HomeAssistant
 
 async def test_sliding_window_limited_to_max_points(hass: HomeAssistant) -> None:
     """History never exceeds RATE_WINDOW_POINTS via the update handler."""
-    from custom_components.voyah.sensor import RATE_WINDOW_POINTS
-
     base_sensors = {**MOCK_CAR_DATA["sensors_data"], "chargingStatus": 1}
     data = {**MOCK_CAR_DATA, "sensors_data": base_sensors, "time": 0}
     coordinator = make_coordinator(hass, data)

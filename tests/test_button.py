@@ -2,20 +2,18 @@
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 from homeassistant.core import HomeAssistant
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.voyah.button import VoyahStartHeatingButton
+from custom_components.voyah.const import DOMAIN
 from custom_components.voyah.coordinator import VoyahDataUpdateCoordinator
 
-from .conftest import MOCK_CAR_DATA, MOCK_CONFIG_DATA, make_config_entry
+from .conftest import MOCK_CAR_DATA, MOCK_CONFIG_DATA
 
 
 def _make_coordinator_with_heating_client(hass):
     """Create coordinator with a client that supports async_start_heating."""
-    from pytest_homeassistant_custom_component.common import MockConfigEntry
-    from custom_components.voyah.const import DOMAIN
-
     entry = MockConfigEntry(domain=DOMAIN, data=MOCK_CONFIG_DATA)
     entry.add_to_hass(hass)
     client = MagicMock()
