@@ -45,6 +45,7 @@ MOCK_CAR_DATA = {
         "12VBatteryVoltage": 12.5,
         "odometer": 15000,
         "outsideTemp": 20,
+        "inBoardTemp": 22,
         "batteryTemp": 25,
         "coolantTemp": 30,
         "climateTargetTemp": 22,
@@ -79,12 +80,13 @@ MOCK_CAR_DATA = {
         "lat": 55.7558,
         "lon": 37.6176,
         "course": 90,
-        "alt": 150,
-        "sat": 8,
+        "height": 150,
+        "sats": 8,
         "hdop": 1.2,
         "speed": 0,
     },
     "time": 1700000000,
+    "last_ping": 6.614,
 }
 
 

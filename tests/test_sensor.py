@@ -9,11 +9,22 @@ from homeassistant.core import HomeAssistant
 import time_machine
 
 from custom_components.voyah.const import SENSOR_DESCRIPTIONS
-from custom_components.voyah.coordinator import VoyahCarInfoCoordinator
-from custom_components.voyah.sensor import RATE_WINDOW_POINTS, VoyahChargingEndTimeSensor, VoyahSensorEntity, VoyahSohSensor
+from custom_components.voyah.sensor import (
+    RATE_WINDOW_POINTS,
+    VoyahChargingEndTimeSensor,
+    VoyahLastPingSensor,
+    VoyahSensorEntity,
+    VoyahSohSensor,
+)
 
-from .conftest import MOCK_CAR_DATA, MOCK_CAR_INFO_DATA, make_car_info_coordinator, make_config_entry, make_coordinator
-from .conftest import MOCK_CAR_ID
+from .conftest import (
+    MOCK_CAR_DATA,
+    MOCK_CAR_ID,
+    MOCK_CAR_INFO_DATA,
+    make_car_info_coordinator,
+    make_config_entry,
+    make_coordinator,
+)
 
 # ── VoyahSensorEntity ────────────────────────────────────────────────────────
 
@@ -34,6 +45,32 @@ async def test_sensor_returns_none_for_missing_key(hass: HomeAssistant) -> None:
     entry = make_config_entry(hass)
     desc = next(d for d in SENSOR_DESCRIPTIONS if d.key == "batteryPercentage")
     sensor = VoyahSensorEntity(coordinator, desc, entry)
+    assert sensor.native_value is None
+
+
+async def test_inboard_temp_sensor_returns_value(hass: HomeAssistant) -> None:
+    """inBoardTemp sensor reads value from coordinator sensors_data."""
+    coordinator = make_coordinator(hass, MOCK_CAR_DATA)
+    entry = make_config_entry(hass)
+    desc = next(d for d in SENSOR_DESCRIPTIONS if d.key == "inBoardTemp")
+    sensor = VoyahSensorEntity(coordinator, desc, entry)
+    assert sensor.native_value == 22
+
+
+async def test_last_ping_sensor_returns_value(hass: HomeAssistant) -> None:
+    """VoyahLastPingSensor reads last_ping from coordinator data."""
+    coordinator = make_coordinator(hass, MOCK_CAR_DATA)
+    entry = make_config_entry(hass)
+    sensor = VoyahLastPingSensor(coordinator, entry)
+    assert sensor.native_value == 6.614
+
+
+async def test_last_ping_sensor_returns_none_when_missing(hass: HomeAssistant) -> None:
+    """VoyahLastPingSensor returns None when last_ping is absent from data."""
+    data = {k: v for k, v in MOCK_CAR_DATA.items() if k != "last_ping"}
+    coordinator = make_coordinator(hass, data)
+    entry = make_config_entry(hass)
+    sensor = VoyahLastPingSensor(coordinator, entry)
     assert sensor.native_value is None
 
 

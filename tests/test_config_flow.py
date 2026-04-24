@@ -8,6 +8,7 @@ import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.voyah.api import VoyahApiAuthError, VoyahApiConnectionError
+from custom_components.voyah.config_flow import _car_label
 from custom_components.voyah.const import DOMAIN
 
 from .conftest import MOCK_ACCESS_TOKEN, MOCK_CAR_ID, MOCK_CONFIG_DATA, MOCK_PHONE, MOCK_REFRESH_TOKEN
@@ -205,3 +206,43 @@ async def test_duplicate_entry_aborts(hass: HomeAssistant) -> None:
 
     assert result["type"] == FlowResultType.ABORT
     assert result["reason"] == "already_configured"
+
+
+def test_car_label_uses_car_model_display_name() -> None:
+    """_car_label reads model name from carModel.displayName."""
+    car = {
+        "_id": "aabbccddeeff001122334455",
+        "vin": "TEST0000000000001",
+        "carModel": {
+            "name": "Dream",
+            "displayName": "МЕЧТА / DREAM",
+        },
+    }
+    label = _car_label(car)
+    assert "МЕЧТА / DREAM" in label
+    assert "TEST0000000000001" in label
+
+
+def test_car_label_falls_back_to_car_model_name() -> None:
+    """_car_label falls back to carModel.name when displayName is absent."""
+    car = {
+        "_id": "abc123",
+        "vin": "VIN000",
+        "carModel": {"name": "Free"},
+    }
+    label = _car_label(car)
+    assert "Free" in label
+
+
+def test_car_label_falls_back_to_top_level_model() -> None:
+    """_car_label falls back to top-level model/modelName keys for old API format."""
+    car = {"_id": "abc123", "vin": "VIN000", "model": "Free"}
+    label = _car_label(car)
+    assert "Free" in label
+
+
+def test_car_label_only_vin_when_no_model() -> None:
+    """_car_label shows only VIN when no model info is present."""
+    car = {"_id": "abc123", "vin": "TEST0000000000002"}
+    label = _car_label(car)
+    assert label == "(TEST0000000000002)"

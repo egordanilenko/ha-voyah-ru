@@ -47,11 +47,11 @@
             "cannot_connect": "Не удалось подключиться к API Voyah",
             "invalid_code": "Неверный SMS-код",
             "invalid_auth": "Ошибка аутентификации",
-            "unknown": "Непредвиденная ошибка"
+            "unknown": "Неожиданная ошибка"
         },
         "abort": {
             "already_configured": "Этот автомобиль уже настроен",
-            "no_cars": "Автомобили для этого аккаунта не найдены",
+            "no_cars": "Для этого аккаунта не найдено автомобилей",
             "reauth_successful": "Повторная аутентификация выполнена успешно",
             "unique_id_mismatch": "Выбранный автомобиль не совпадает с настроенным. Повторная аутентификация возможна только для того же автомобиля."
         }
@@ -65,17 +65,19 @@
             "battery_voltage_12v": { "name": "Напряжение 12V батареи" },
             "odometer": { "name": "Одометр" },
             "outside_temperature": { "name": "Температура снаружи" },
+            "inboard_temperature": { "name": "Температура в салоне" },
             "battery_temperature": { "name": "Температура батареи" },
             "coolant_temperature": { "name": "Температура охлаждающей жидкости" },
             "climate_target_temperature": { "name": "Целевая температура климата" },
             "climate_fan_speed": { "name": "Скорость вентилятора климата" },
-            "tire_pressure_front_left": { "name": "Давление шины передняя левая" },
-            "tire_pressure_front_right": { "name": "Давление шины передняя правая" },
-            "tire_pressure_rear_left": { "name": "Давление шины задняя левая" },
-            "tire_pressure_rear_right": { "name": "Давление шины задняя правая" },
+            "tire_pressure_front_left": { "name": "Давление шины спереди слева" },
+            "tire_pressure_front_right": { "name": "Давление шины спереди справа" },
+            "tire_pressure_rear_left": { "name": "Давление шины сзади слева" },
+            "tire_pressure_rear_right": { "name": "Давление шины сзади справа" },
             "speed": { "name": "Скорость" },
             "charging_end_time": { "name": "Расчётное время окончания зарядки" },
-            "battery_soh": { "name": "Здоровье батареи (SOH)" }
+            "battery_soh": { "name": "Здоровье батареи (SOH)" },
+            "last_ping": { "name": "Последний пинг" }
         },
         "device_tracker": {
             "location": { "name": "Местоположение" }
@@ -87,9 +89,9 @@
             "ignition": { "name": "Зажигание" },
             "charging": { "name": "Зарядка" },
             "central_locking": { "name": "Центральный замок" },
-            "door_front_left": { "name": "Дверь передняя левая" },
-            "door_front_right": { "name": "Дверь передняя правая" },
-            "door_rear_left": { "name": "Дверь задняя левая" },
+            "door_front_left": { "name": "Дверь спереди слева" },
+            "door_front_right": { "name": "Дверь спереди справа" },
+            "door_rear_left": { "name": "Дверь сзади слева" },
             "trunk": { "name": "Багажник" },
             "hatch": { "name": "Хэтчбек" },
             "climate": { "name": "Климат" },
@@ -102,8 +104,8 @@
             "wheel_heating": { "name": "Обогрев руля" },
             "seat_heating_driver": { "name": "Обогрев сиденья водителя" },
             "seat_heating_front_passenger": { "name": "Обогрев сиденья переднего пассажира" },
-            "seat_heating_rear_left": { "name": "Обогрев сиденья заднего левого" },
-            "seat_heating_rear_right": { "name": "Обогрев сиденья заднего правого" }
+            "seat_heating_rear_left": { "name": "Обогрев сиденья сзади слева" },
+            "seat_heating_rear_right": { "name": "Обогрев сиденья сзади справа" }
         }
     }
 }

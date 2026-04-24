@@ -77,6 +77,13 @@ SENSOR_DESCRIPTIONS: tuple[SensorEntityDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
+        key="inBoardTemp",
+        translation_key="inboard_temperature",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
         key="batteryTemp",
         translation_key="battery_temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,

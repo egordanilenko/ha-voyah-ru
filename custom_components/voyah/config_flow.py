@@ -250,7 +250,8 @@ class VoyahConfigFlow(ConfigFlow, domain=DOMAIN):
 def _car_label(car: dict[str, Any]) -> str:
     """Human-readable label for a car."""
     parts: list[str] = []
-    model = car.get("model") or car.get("modelName")
+    car_model = car.get("carModel") or {}
+    model = car_model.get("displayName") or car_model.get("name") or car.get("model") or car.get("modelName")
     name = car.get("name")
     plate = car.get("plateNumber") or car.get("grz")
     vin = car.get("vin")

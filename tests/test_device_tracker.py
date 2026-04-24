@@ -53,8 +53,8 @@ async def test_tracker_extra_state_attributes(hass: HomeAssistant) -> None:
 
     assert attrs["course"] == 90
     assert attrs["hdop"] == 1.2
-    assert "altitude" in attrs
-    assert "satellites" in attrs
+    assert attrs["altitude"] == 150
+    assert attrs["satellites"] == 8
 
 
 async def test_tracker_returns_none_when_position_missing(hass: HomeAssistant) -> None:

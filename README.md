@@ -27,6 +27,8 @@
 | Скорость | км/ч | Текущая скорость автомобиля |
 | Расчётное время окончания зарядки | timestamp | Прогнозируемое время завершения зарядки (линейная экстраполяция) |
 | Здоровье батареи (SOH) | % | Состояние здоровья высоковольтной батареи (>100% — новая батарея) |
+| Температура в салоне | °C | Температура воздуха внутри салона автомобиля |
+| Время с последнего пинга | с | Время с момента последнего соединения автомобиля с сервером |
 
 #### Расчётное время окончания зарядки — алгоритм
 
@@ -253,6 +255,8 @@ Custom integration for [Home Assistant](https://www.home-assistant.io/) that con
 | Speed | km/h | Current vehicle speed |
 | Estimated charging end time | timestamp | Projected completion time (linear extrapolation from observed charge rate) |
 | Battery SOH | % | State of health of the high-voltage battery (>100% means new battery) |
+| Interior temperature | °C | Air temperature inside the vehicle cabin |
+| Time since last ping | s | Seconds since the car last connected to the server |
 
 #### Estimated charging end time — algorithm
 

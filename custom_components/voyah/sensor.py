@@ -7,8 +7,8 @@ from datetime import datetime, timedelta, timezone
 import logging
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorEntityDescription, SensorStateClass
-from homeassistant.const import PERCENTAGE
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import PERCENTAGE, UnitOfTime
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -53,6 +53,9 @@ async def async_setup_entry(
     live_sensors = car_info.get("liveSensors") or {}
     if "soh" in live_sensors:
         entities.append(VoyahSohSensor(car_info_coordinator, entry))
+
+    if "last_ping" in coordinator.data:
+        entities.append(VoyahLastPingSensor(coordinator, entry))
 
     _LOGGER.debug("Creating %d sensor entities", len(entities))
     async_add_entities(entities)
@@ -246,3 +249,33 @@ class VoyahSohSensor(CoordinatorEntity[VoyahCarInfoCoordinator], SensorEntity):
     def native_value(self) -> float | None:
         live = (self.coordinator.data or {}).get("liveSensors") or {}
         return live.get("soh")
+
+
+class VoyahLastPingSensor(CoordinatorEntity[VoyahDataUpdateCoordinator], SensorEntity):
+    """Sensor reporting seconds since the car last connected to the server."""
+
+    _attr_has_entity_name = True
+    _attr_device_class = SensorDeviceClass.DURATION
+    _attr_native_unit_of_measurement = UnitOfTime.SECONDS
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_translation_key = "last_ping"
+    _attr_icon = "mdi:timer-outline"
+
+    def __init__(
+        self,
+        coordinator: VoyahDataUpdateCoordinator,
+        entry: ConfigEntry,
+    ) -> None:
+        super().__init__(coordinator)
+        car_id = entry.data.get(CONF_CAR_ID, entry.entry_id)
+        self._attr_unique_id = f"{car_id}_last_ping"
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, car_id)},
+            name=entry.data.get(CONF_CAR_NAME, "Voyah"),
+            manufacturer="Voyah",
+        )
+
+    @property
+    def native_value(self) -> float | None:
+        """Return seconds since the last ping from the car."""
+        return self.coordinator.data.get("last_ping")
