@@ -22,7 +22,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up Voyah device tracker."""
-    coordinator: VoyahDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator: VoyahDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
 
     position_data = coordinator.data.get("position_data", {})
     if position_data.get("lat") is not None and position_data.get("lon") is not None:

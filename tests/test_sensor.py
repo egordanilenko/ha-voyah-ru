@@ -14,9 +14,17 @@ from custom_components.voyah.sensor import (
     VoyahChargingEndTimeSensor,
     VoyahLastPingSensor,
     VoyahSensorEntity,
+    VoyahSohSensor,
 )
 
-from .conftest import MOCK_CAR_DATA, make_config_entry, make_coordinator
+from .conftest import (
+    MOCK_CAR_DATA,
+    MOCK_CAR_ID,
+    MOCK_CAR_INFO_DATA,
+    make_car_info_coordinator,
+    make_config_entry,
+    make_coordinator,
+)
 
 # ── VoyahSensorEntity ────────────────────────────────────────────────────────
 
@@ -298,3 +306,30 @@ async def test_sliding_window_limited_to_max_points(hass: HomeAssistant) -> None
             sensor._handle_coordinator_update()
 
     assert len(sensor._pct_history) == RATE_WINDOW_POINTS
+
+
+# ── VoyahSohSensor ───────────────────────────────────────────────────────────
+
+
+async def test_soh_sensor_returns_value(hass: HomeAssistant) -> None:
+    """SOH sensor reads soh value from car info coordinator data."""
+    coordinator = make_car_info_coordinator(hass, MOCK_CAR_INFO_DATA)
+    entry = make_config_entry(hass)
+    sensor = VoyahSohSensor(coordinator, entry)
+    assert sensor.native_value == 98
+
+
+async def test_soh_sensor_returns_none_when_missing(hass: HomeAssistant) -> None:
+    """SOH sensor returns None when data is empty."""
+    coordinator = make_car_info_coordinator(hass, {})
+    entry = make_config_entry(hass)
+    sensor = VoyahSohSensor(coordinator, entry)
+    assert sensor.native_value is None
+
+
+async def test_soh_sensor_unique_id(hass: HomeAssistant) -> None:
+    """SOH sensor unique_id is formatted as {car_id}_battery_soh."""
+    coordinator = make_car_info_coordinator(hass, MOCK_CAR_INFO_DATA)
+    entry = make_config_entry(hass)
+    sensor = VoyahSohSensor(coordinator, entry)
+    assert sensor.unique_id == f"{MOCK_CAR_ID}_battery_soh"

@@ -8,14 +8,14 @@ import logging
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorEntityDescription, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import UnitOfTime
+from homeassistant.const import PERCENTAGE, UnitOfTime
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import CONF_CAR_ID, CONF_CAR_NAME, DOMAIN, SENSOR_DESCRIPTIONS
-from .coordinator import VoyahDataUpdateCoordinator
+from .coordinator import VoyahCarInfoCoordinator, VoyahDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up Voyah sensor entities."""
-    coordinator: VoyahDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator: VoyahDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
 
     _LOGGER.debug(
         "Setting up sensors. coordinator.data type=%s, value=%s",
@@ -47,6 +47,12 @@ async def async_setup_entry(
 
     if "batteryPercentage" in sensors_data and "chargingStatus" in sensors_data:
         entities.append(VoyahChargingEndTimeSensor(coordinator, entry))
+
+    car_info_coordinator: VoyahCarInfoCoordinator = hass.data[DOMAIN][entry.entry_id]["car_info_coordinator"]
+    car_info = car_info_coordinator.data or {}
+    live_sensors = car_info.get("liveSensors") or {}
+    if "soh" in live_sensors:
+        entities.append(VoyahSohSensor(car_info_coordinator, entry))
 
     if "last_ping" in coordinator.data:
         entities.append(VoyahLastPingSensor(coordinator, entry))
@@ -218,6 +224,31 @@ class VoyahChargingEndTimeSensor(CoordinatorEntity[VoyahDataUpdateCoordinator], 
         if not self._was_charging:
             return None
         return self._cached_end_time
+
+
+class VoyahSohSensor(CoordinatorEntity[VoyahCarInfoCoordinator], SensorEntity):
+    """State of Health sensor for the high-voltage battery."""
+
+    _attr_has_entity_name = True
+    _attr_translation_key = "battery_soh"
+    _attr_native_unit_of_measurement = PERCENTAGE
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_icon = "mdi:battery-heart"
+
+    def __init__(self, coordinator: VoyahCarInfoCoordinator, entry: ConfigEntry) -> None:
+        super().__init__(coordinator)
+        car_id = entry.data.get(CONF_CAR_ID, entry.entry_id)
+        self._attr_unique_id = f"{car_id}_battery_soh"
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, car_id)},
+            name=entry.data.get(CONF_CAR_NAME, "Voyah"),
+            manufacturer="Voyah",
+        )
+
+    @property
+    def native_value(self) -> float | None:
+        live = (self.coordinator.data or {}).get("liveSensors") or {}
+        return live.get("soh")
 
 
 class VoyahLastPingSensor(CoordinatorEntity[VoyahDataUpdateCoordinator], SensorEntity):

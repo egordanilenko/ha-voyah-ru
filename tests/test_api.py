@@ -122,3 +122,14 @@ async def test_sign_in_returns_tokens_on_success() -> None:
 
     result = await VoyahApiClient.async_sign_in(session, "79001234567", "123456")
     assert result["accessToken"] == "acc"
+
+
+async def test_get_car_info_success() -> None:
+    """async_get_car_info returns dict from API on 200."""
+    car_info = {"liveSensors": {"soh": 98}}
+    session = MagicMock()
+    session.request = MagicMock(return_value=_mock_response(200, car_info))
+
+    client = _make_client(session)
+    result = await client.async_get_car_info()
+    assert result == {"liveSensors": {"soh": 98}}

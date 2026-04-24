@@ -19,7 +19,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up Voyah binary sensor entities."""
-    coordinator: VoyahDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator: VoyahDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
 
     async_add_entities(
         VoyahBinarySensorEntity(coordinator, description, entry)

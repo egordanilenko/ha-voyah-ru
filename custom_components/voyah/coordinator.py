@@ -66,3 +66,34 @@ class VoyahDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             new_data[CONF_REFRESH_TOKEN] = new_refresh
             self.hass.config_entries.async_update_entry(self._entry, data=new_data)
             _LOGGER.debug("Persisted refreshed tokens to config entry")
+
+
+CAR_INFO_UPDATE_INTERVAL = timedelta(hours=12)
+
+
+class VoyahCarInfoCoordinator(DataUpdateCoordinator[dict[str, Any]]):
+    """Coordinator for slow-changing car info (SOH, etc.) fetched every 12 hours."""
+
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        client: VoyahApiClient,
+        entry: ConfigEntry,
+    ) -> None:
+        super().__init__(
+            hass,
+            _LOGGER,
+            name=f"{DOMAIN}_car_info",
+            update_interval=CAR_INFO_UPDATE_INTERVAL,
+        )
+        self.client = client
+        self._entry = entry
+
+    async def _async_update_data(self) -> dict[str, Any]:
+        """Fetch car info from the API."""
+        try:
+            return await self.client.async_get_car_info()
+        except VoyahApiAuthError as err:
+            raise ConfigEntryAuthFailed(err) from err
+        except VoyahApiError as err:
+            raise UpdateFailed(f"Error fetching Voyah car info: {err}") from err

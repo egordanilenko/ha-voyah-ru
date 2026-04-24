@@ -121,6 +121,13 @@ class VoyahApiClient:
             json_data={},
         )
 
+    async def async_get_car_info(self) -> dict[str, Any]:
+        """Fetch static car info including SOH from car/v2 endpoint."""
+        return await self._request(
+            "GET",
+            f"/car-service/car/v2/{self._car_id}",
+        )
+
     async def async_get_car_data(self) -> dict[str, Any]:
         """Fetch full telemetry from the tbox endpoint."""
         raw = await self._request(

@@ -76,6 +76,7 @@
             "tire_pressure_rear_right": { "name": "Давление шины сзади справа" },
             "speed": { "name": "Скорость" },
             "charging_end_time": { "name": "Расчётное время окончания зарядки" },
+            "battery_soh": { "name": "Здоровье батареи (SOH)" },
             "last_ping": { "name": "Последний пинг" }
         },
         "device_tracker": {
