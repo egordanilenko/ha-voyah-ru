@@ -16,7 +16,6 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import CONF_CAR_ID, CONF_CAR_NAME, DOMAIN
 from .coordinator import VoyahDataUpdateCoordinator
 
-
 COMMAND_REFRESH_DELAY_SECONDS = (2, 5, 15)
 
 
