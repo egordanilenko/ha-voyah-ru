@@ -29,11 +29,11 @@ description: Написание и изменение кода интеграц�
 
 ```python
 SensorEntityDescription(
-    key="coolantTemp",                       # точное имя ключа из API
-    translation_key="coolant_temperature",   # snake_case
+    key="coolantTemp",  # точное имя ключа из API
+    translation_key="coolant_temperature",  # snake_case
     native_unit_of_measurement=UnitOfTemperature.CELSIUS,
     device_class=SensorDeviceClass.TEMPERATURE,  # если подходит стандартный
-    state_class=SensorStateClass.MEASUREMENT,    # TOTAL_INCREASING для одометров
+    state_class=SensorStateClass.MEASUREMENT,  # TOTAL_INCREASING для одометров
     # icon="mdi:..." — только если нет device_class с подходящей иконкой
 )
 ```

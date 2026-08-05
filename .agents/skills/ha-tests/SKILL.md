@@ -90,8 +90,7 @@ config flow должен быть покрыт полностью.
 нужна фикстура `enable_custom_integrations`:
 
 ```python
-async def test_full_setup(hass, enable_custom_integrations):
-    ...
+async def test_full_setup(hass, enable_custom_integrations): ...
 ```
 
 ## Правила
