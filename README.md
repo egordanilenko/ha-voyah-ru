@@ -236,6 +236,30 @@ API может требовать валидный токен Yandex SmartCaptch
 
 Проверьте логи Home Assistant по слову `voyah` — обычно это означает сетевую ошибку или временную недоступность API. Интеграция повторит попытку при следующем опросе.
 
+## История изменений
+
+### 1.2.0 — 2026-08-05
+
+- Кнопка переключения центрального замка
+- Кнопка открытия/закрытия багажника
+- Кнопка запуска охлаждения салона
+- Правки по замечаниям линтера
+
+### 1.1.0 — 2026-06-21
+
+- Сенсор здоровья высоковольтной батареи (SOH) — опрашивается раз в 12 часов отдельным координатором, чтобы не нагружать основной цикл
+- Доработки разбора ответов API
+- Лицензия MIT и публикация интеграции в каталоге HACS
+
+### 1.0.0 — 2026-03-31
+
+- Первый релиз: аутентификация по SMS, выбор организации и автомобиля
+- Сенсоры телеметрии, бинарные сенсоры, трекер устройства (GPS)
+- Кнопка запуска отопителя салона
+- Сенсор прогноза времени окончания зарядки
+- Исправлена повторная аутентификация при истечении токенов
+- Тесты и линтер в CI
+
 ---
 
 <a id="english"></a>
@@ -473,6 +497,30 @@ The API may require a valid Yandex SmartCaptcha token. Use the `setup_auth.py` s
 ### Entities show "unavailable"
 
 Check Home Assistant logs for `voyah` — typically means a network error or the API is temporarily down. The integration will retry on the next polling interval.
+
+## Changelog
+
+### 1.2.0 — 2026-08-05
+
+- Central locking toggle button
+- Trunk open/close button
+- Cabin cooling button
+- Linter fixes
+
+### 1.1.0 — 2026-06-21
+
+- High-voltage battery State of Health (SOH) sensor — polled every 12 hours by a separate coordinator to keep the main polling cycle light
+- Improvements to API response parsing
+- MIT license and publication in the HACS default catalog
+
+### 1.0.0 — 2026-03-31
+
+- Initial release: SMS authentication, organization and vehicle selection
+- Telemetry sensors, binary sensors, device tracker (GPS)
+- Cabin heating button
+- Estimated charging end time sensor
+- Fixed reauthentication on token expiry
+- Tests and linter in CI
 
 ## License
 
