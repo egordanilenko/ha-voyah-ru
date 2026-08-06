@@ -92,6 +92,8 @@ tests/                 # юнит-тесты, общие фикстуры в con
 ## Релиз
 
 - Поднять `version` в `custom_components/voyah/manifest.json`.
-- Минимальная версия HA задана в `hacs.json` (`homeassistant: 2024.1.0`) — не использовать
-  API ядра новее без её поднятия.
+- Минимальная версия HA задана в `hacs.json` (`homeassistant: 2024.11.0`) — не использовать
+  API ядра новее без её поднятия. Планка 2024.11 продиктована хелперами reauth
+  (`_get_reauth_entry`, `_abort_if_unique_id_mismatch`, `async_update_reload_and_abort(data_updates=...)`)
+  и типом `ConfigFlowResult`.
 - HACS подтягивает версии из GitHub-релизов — после поднятия версии создать релиз.
