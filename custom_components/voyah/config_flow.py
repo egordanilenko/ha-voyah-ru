@@ -5,8 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from homeassistant.config_entries import ConfigEntry, ConfigFlow
-from homeassistant.data_entry_flow import FlowResult
+from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import voluptuous as vol
 
@@ -42,7 +41,7 @@ class VoyahConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_reauth(
         self,
         entry_data: dict[str, Any],
-    ) -> FlowResult:
+    ) -> ConfigFlowResult:
         """Start reauthentication flow when tokens expire."""
         self._reauth_entry = self._get_reauth_entry()
         self._phone = entry_data.get(CONF_PHONE, "")
@@ -51,7 +50,7 @@ class VoyahConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_reauth_confirm(
         self,
         user_input: dict[str, Any] | None = None,
-    ) -> FlowResult:
+    ) -> ConfigFlowResult:
         """Step: confirm phone and request new SMS."""
         errors: dict[str, str] = {}
 
@@ -83,7 +82,7 @@ class VoyahConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_user(
         self,
         user_input: dict[str, Any] | None = None,
-    ) -> FlowResult:
+    ) -> ConfigFlowResult:
         """Step 1: enter phone number and request SMS."""
         errors: dict[str, str] = {}
 
@@ -103,7 +102,7 @@ class VoyahConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_code(
         self,
         user_input: dict[str, Any] | None = None,
-    ) -> FlowResult:
+    ) -> ConfigFlowResult:
         """Step 2: enter SMS code."""
         errors: dict[str, str] = {}
 
@@ -151,7 +150,7 @@ class VoyahConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_organization(
         self,
         user_input: dict[str, Any] | None = None,
-    ) -> FlowResult:
+    ) -> ConfigFlowResult:
         """Step 3 (optional): select organization."""
         errors: dict[str, str] = {}
 
@@ -179,7 +178,7 @@ class VoyahConfigFlow(ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
-    async def _async_load_cars(self) -> FlowResult:
+    async def _async_load_cars(self) -> ConfigFlowResult:
         """Fetch car list and proceed to car selection."""
         session = async_get_clientsession(self.hass)
         self._cars = await VoyahApiClient.async_search_cars(session, self._access_token)
@@ -196,7 +195,7 @@ class VoyahConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_car(
         self,
         user_input: dict[str, Any] | None = None,
-    ) -> FlowResult:
+    ) -> ConfigFlowResult:
         """Step 4: select a car."""
         if user_input is not None:
             car_id = user_input["car"]
@@ -213,7 +212,7 @@ class VoyahConfigFlow(ConfigFlow, domain=DOMAIN):
             data_schema=vol.Schema({vol.Required("car"): vol.In(car_options)}),
         )
 
-    async def _async_create_entry(self, car: dict[str, Any]) -> FlowResult:
+    async def _async_create_entry(self, car: dict[str, Any]) -> ConfigFlowResult:
         """Create or update the config entry for a selected car."""
         car_id = car.get("_id", car.get("id"))
         car_name = _car_label(car)
