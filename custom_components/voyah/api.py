@@ -145,30 +145,50 @@ class VoyahApiClient:
         )
 
     async def async_get_car_data(self) -> dict[str, Any]:
-        """Fetch full telemetry from the tbox endpoint."""
+        """Fetch full telemetry from the new BFF telemetry endpoint."""
         raw = await self._request(
             "GET",
-            f"/car-service/tbox/{self._car_id}/sensors",
+            f"/client-bff-service/telemetry/{self._car_id}",
         )
         _LOGGER.debug(
-            "Tbox response keys: %s",
+            "BFF telemetry response keys: %s",
             list(raw.keys()),
         )
         return self._parse(raw)
 
     @staticmethod
     def _parse(raw: dict[str, Any]) -> dict[str, Any]:
-        """Extract relevant fields from the tbox sensors response."""
-        payload = raw.get("sensors") if isinstance(raw.get("sensors"), dict) else raw
-        sensors_data: dict[str, Any] = dict(payload.get("sensorsData") or {})
-        position_data: dict[str, Any] = payload.get("positionData") or {}
-        timestamp: int | None = payload.get("time")
+        """Extract relevant fields from the new BFF telemetry response."""
+        telemetry = raw.get("sensors") if isinstance(raw.get("sensors"), dict) else {}
+        
+        # Создаем плоскую структуру sensors_data для обратной совместимости с существующим файлом sensor.py
+        sensors_data: dict[str, Any] = {}
+        
+        known_keys = [
+            "12VBatteryVoltage", "batteryPercentage", "batteryTemp", 
+            "climateFanSpeed", "climateTargetTemp", "coolantTemp", 
+            "fuelPercentage", "inBoardTemp", "odometer", "outsideTemp", 
+            "remainsBatteryMileage", "remainsFuelMileage", "signalLevel", 
+            "tirePressureFL", "tirePressureFR", "tirePressureRL", "tirePressureRR"
+        ]
+        
+        for key in known_keys:
+            if key in telemetry:
+                sensors_data[key] = telemetry[key]
 
-        if position_data.get("speed") is not None:
-            sensors_data["speed"] = position_data["speed"]
+        # Вычленяем геопозицию для device_tracker.py
+        position_data: dict[str, Any] = {
+            "lat": telemetry.get("lat"),
+            "lon": telemetry.get("lon"),
+            "course": telemetry.get("course"),
+            "speed": telemetry.get("speed"),
+        }
+
+        # Таймстампы обновления состояния
+        timestamp: int | None = raw.get("carStateUpdatedAt") or raw.get("positionAt")
 
         _LOGGER.debug(
-            "Parsed: %d sensor keys, time=%s",
+            "Parsed new BFF format: %d sensor keys, time=%s",
             len(sensors_data),
             timestamp,
         )
@@ -176,7 +196,8 @@ class VoyahApiClient:
             "sensors_data": sensors_data,
             "position_data": position_data,
             "time": timestamp,
-            "last_ping": payload.get("lastPing"),
+            "last_ping": raw.get("isOnline"),
+            "raw_sensors": telemetry,  # сохраняем оригинальный узел для будущего разбора кнопок/бинарников
         }
 
     # ── Auth helpers (used by config_flow, not during polling) ──
@@ -223,42 +244,3 @@ class VoyahApiClient:
             if resp.status != 200:
                 return []
             data = await resp.json()
-            if isinstance(data, list):
-                return data
-            return data.get("rows", data.get("items", []))
-
-    @staticmethod
-    async def async_sign_in_org(session: aiohttp.ClientSession, access_token: str, org_id: str) -> dict[str, Any]:
-        """Select an organization, returning updated tokens."""
-        url = f"{API_BASE_URL}/id-service/org/sign-in"
-        async with session.post(
-            url,
-            headers={
-                "Authorization": f"Bearer {access_token}",
-                "Content-Type": "application/json",
-                "x-app": "web",
-            },
-            json={"orgId": org_id},
-        ) as resp:
-            data = await resp.json()
-            if resp.status != 200:
-                raise VoyahApiError(data.get("message", f"Org sign-in failed: {resp.status}"))
-            return data
-
-    @staticmethod
-    async def async_search_cars(session: aiohttp.ClientSession, access_token: str) -> list[dict[str, Any]]:
-        """Fetch available cars for the authenticated user."""
-        url = f"{API_BASE_URL}/car-service/car/v2/search"
-        async with session.post(
-            url,
-            headers={
-                "Authorization": f"Bearer {access_token}",
-                "Content-Type": "application/json",
-                "x-app": "web",
-            },
-            json={"addSensors": False},
-        ) as resp:
-            if resp.status != 200:
-                return []
-            data = await resp.json()
-            return data.get("rows", data.get("items", []))

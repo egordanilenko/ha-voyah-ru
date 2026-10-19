@@ -37,15 +37,19 @@ async def async_setup_entry(
         coordinator.data,
     )
 
+    # Берём данные из нашего нового совместимого слоя в api.py
     sensors_data = coordinator.data.get("sensors_data", {})
+    raw_sensors = coordinator.data.get("raw_sensors", {})
 
+    # Создаем сущности на основе известных ключей, которые пришли из BFF
     entities: list[SensorEntity] = [
         VoyahSensorEntity(coordinator, description, entry)
         for description in SENSOR_DESCRIPTIONS
         if description.key in sensors_data
     ]
 
-    if "batteryPercentage" in sensors_data and "chargingStatus" in sensors_data:
+    # Для расчета окончания зарядки проверяем наличие батареи и статус провода (isChargingGunInserted)
+    if "batteryPercentage" in sensors_data and ("isChargingGunInserted" in raw_sensors or "chargingStatus" in sensors_data):
         entities.append(VoyahChargingEndTimeSensor(coordinator, entry))
 
     car_info_coordinator: VoyahCarInfoCoordinator = hass.data[DOMAIN][entry.entry_id]["car_info_coordinator"]
@@ -54,7 +58,7 @@ async def async_setup_entry(
     if "soh" in live_sensors:
         entities.append(VoyahSohSensor(car_info_coordinator, entry))
 
-    if "last_ping" in coordinator.data:
+    if "last_ping" in coordinator.data or "isOnline" in raw_sensors:
         entities.append(VoyahLastPingSensor(coordinator, entry))
 
     _LOGGER.debug("Creating %d sensor entities", len(entities))
@@ -86,7 +90,17 @@ class VoyahSensorEntity(CoordinatorEntity[VoyahDataUpdateCoordinator], SensorEnt
     def native_value(self) -> float | int | None:
         """Return the sensor value."""
         sensors_data = self.coordinator.data.get("sensors_data", {})
-        return sensors_data.get(self.entity_description.key)
+        val = sensors_data.get(self.entity_description.key)
+        
+        # Защита от перевода строк в числа, так как BFF возвращает проценты строками ("70")
+        if isinstance(val, str):
+            try:
+                if "." in val:
+                    return float(val)
+                return int(val)
+            except ValueError:
+                return val
+        return val
 
 
 class VoyahChargingEndTimeSensor(CoordinatorEntity[VoyahDataUpdateCoordinator], SensorEntity):
@@ -118,16 +132,35 @@ class VoyahChargingEndTimeSensor(CoordinatorEntity[VoyahDataUpdateCoordinator], 
 
         self._init_tracking()
 
+    def _get_charging_status(self) -> bool:
+        """Helper to get charging status from new or old format."""
+        sensors = self.coordinator.data.get("sensors_data", {})
+        raw_sensors = self.coordinator.data.get("raw_sensors", {})
+        # В новом API используем состояние подключенного кабеля
+        if "isChargingGunInserted" in raw_sensors:
+            return bool(raw_sensors.get("isChargingGunInserted"))
+        return bool(sensors.get("chargingStatus"))
+
+    def _get_battery_percentage(self) -> float | None:
+        """Helper to get safe battery percentage as float."""
+        sensors = self.coordinator.data.get("sensors_data", {})
+        pct = sensors.get("batteryPercentage")
+        if isinstance(pct, str):
+            try:
+                return float(pct)
+            except ValueError:
+                return None
+        return pct
+
     def _init_tracking(self) -> None:
         """Seed tracking state from the first coordinator snapshot."""
-        sensors = self.coordinator.data.get("sensors_data", {})
-        if sensors.get("chargingStatus"):
-            pct = sensors.get("batteryPercentage")
+        if self._get_charging_status():
+            pct = self._get_battery_percentage()
             api_time = self.coordinator.data.get("time")
             self._was_charging = True
             self._last_seen_pct = pct
             if pct is not None and api_time is not None:
-                self._pct_history.append((pct, api_time))
+                self._pct_history.append((pct, api_time / 1000.0 if api_time > 5000000000 else api_time))
             _LOGGER.debug(
                 "Charging already active on init: pct=%s, time=%s",
                 pct,
@@ -185,16 +218,19 @@ class VoyahChargingEndTimeSensor(CoordinatorEntity[VoyahDataUpdateCoordinator], 
     @callback
     def _handle_coordinator_update(self) -> None:
         """Recalculate only when charging state or battery percentage changes."""
-        sensors = self.coordinator.data.get("sensors_data", {})
-        is_charging = bool(sensors.get("chargingStatus"))
+        is_charging = self._get_charging_status()
 
         if not is_charging:
             if self._was_charging:
                 _LOGGER.debug("Charging stopped, resetting tracking")
                 self._reset_tracking()
         elif not self._was_charging:
-            pct = sensors.get("batteryPercentage")
+            pct = self._get_battery_percentage()
             api_time = self.coordinator.data.get("time")
+            # Защита от миллисекунд в таймстампе нового API
+            if api_time and api_time > 5000000000:
+                api_time = api_time / 1000.0
+                
             self._was_charging = True
             self._last_seen_pct = pct
             self._cached_end_time = None
@@ -202,9 +238,12 @@ class VoyahChargingEndTimeSensor(CoordinatorEntity[VoyahDataUpdateCoordinator], 
                 self._pct_history.append((pct, api_time))
             _LOGGER.debug("Charging started: pct=%s, time=%s", pct, api_time)
         else:
-            current_pct = sensors.get("batteryPercentage")
+            current_pct = self._get_battery_percentage()
             if current_pct is not None and current_pct != self._last_seen_pct:
                 current_time = self.coordinator.data.get("time")
+                if current_time and current_time > 5000000000:
+                    current_time = current_time / 1000.0
+                    
                 _LOGGER.debug(
                     "Battery pct changed: %s -> %s (time=%s)",
                     self._last_seen_pct,
@@ -220,25 +259,23 @@ class VoyahChargingEndTimeSensor(CoordinatorEntity[VoyahDataUpdateCoordinator], 
 
     @property
     def native_value(self) -> datetime | None:
-        """Return the last computed estimated charging end time."""
-        if not self._was_charging:
-            return None
+        """Return the estimated completion timestamp."""
         return self._cached_end_time
 
 
 class VoyahSohSensor(CoordinatorEntity[VoyahCarInfoCoordinator], SensorEntity):
-    """State of Health sensor for the high-voltage battery."""
+    """Sensor for State of Health (SOH) from static info."""
 
     _attr_has_entity_name = True
-    _attr_translation_key = "battery_soh"
-    _attr_native_unit_of_measurement = PERCENTAGE
     _attr_state_class = SensorStateClass.MEASUREMENT
-    _attr_icon = "mdi:battery-heart"
+    _attr_native_unit_of_measurement = PERCENTAGE
+    _attr_icon = "mdi:heart-battery"
+    _attr_translation_key = "soh"
 
     def __init__(self, coordinator: VoyahCarInfoCoordinator, entry: ConfigEntry) -> None:
         super().__init__(coordinator)
         car_id = entry.data.get(CONF_CAR_ID, entry.entry_id)
-        self._attr_unique_id = f"{car_id}_battery_soh"
+        self._attr_unique_id = f"{car_id}_soh"
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, car_id)},
             name=entry.data.get(CONF_CAR_NAME, "Voyah"),
@@ -247,25 +284,19 @@ class VoyahSohSensor(CoordinatorEntity[VoyahCarInfoCoordinator], SensorEntity):
 
     @property
     def native_value(self) -> float | None:
-        live = (self.coordinator.data or {}).get("liveSensors") or {}
-        return live.get("soh")
+        car_info = self.coordinator.data or {}
+        return car_info.get("liveSensors", {}).get("soh")
 
 
 class VoyahLastPingSensor(CoordinatorEntity[VoyahDataUpdateCoordinator], SensorEntity):
-    """Sensor reporting seconds since the car last connected to the server."""
+    """Sensor showing cloud connectivity status."""
 
     _attr_has_entity_name = True
-    _attr_device_class = SensorDeviceClass.DURATION
-    _attr_native_unit_of_measurement = UnitOfTime.SECONDS
-    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_device_class = SensorDeviceClass.TIMESTAMP
     _attr_translation_key = "last_ping"
-    _attr_icon = "mdi:timer-outline"
+    _attr_icon = "mdi:cloud-check"
 
-    def __init__(
-        self,
-        coordinator: VoyahDataUpdateCoordinator,
-        entry: ConfigEntry,
-    ) -> None:
+    def __init__(self, coordinator: VoyahDataUpdateCoordinator, entry: ConfigEntry) -> None:
         super().__init__(coordinator)
         car_id = entry.data.get(CONF_CAR_ID, entry.entry_id)
         self._attr_unique_id = f"{car_id}_last_ping"
@@ -276,6 +307,16 @@ class VoyahLastPingSensor(CoordinatorEntity[VoyahDataUpdateCoordinator], SensorE
         )
 
     @property
-    def native_value(self) -> float | None:
-        """Return seconds since the last ping from the car."""
-        return self.coordinator.data.get("last_ping")
+    def native_value(self) -> datetime | None:
+        # Если машина онлайн по новому API, отдаем текущее время как успешный пинг
+        raw_sensors = self.coordinator.data.get("raw_sensors", {})
+        if raw_sensors.get("isOnline") is True:
+            return datetime.now(timezone.utc)
+            
+        # Иначе фолбэк на таймстамп из BFF
+        api_time = self.coordinator.data.get("time")
+        if api_time:
+            if api_time > 5000000000:  # в миллисекундах
+                return datetime.fromtimestamp(api_time / 1000.0, tz=timezone.utc)
+            return datetime.fromtimestamp(api_time, tz=timezone.utc)
+        return None
