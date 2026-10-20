@@ -297,6 +297,15 @@ API может требовать валидный токен Yandex SmartCaptch
 
 ## История изменений
 
+### 1.3.0 — 2026-10-20
+
+- Переход на новое API телеметрии Voyah: как и веб-приложение, интеграция по флагу `newTelemetryEnabled` выбирает, какой API обслуживает машину, и автоматически переключается между старым и новым API (спасибо @saippuakauppias, PR #34)
+- Новые сущности: сенсор статуса автомобиля (офлайн / зарядка / движение / зажигание / доступен), сенсор уровня сигнала, бинарные сенсоры «Зарядный кабель подключён», «На парковке», «Автомобиль онлайн», правая задняя дверь, диагностика устаревшей прошивки и настроек
+- Переключатели прогрева и охлаждения салона и кнопка «Найти автомобиль» (только новый API)
+- Статус зарядки определяется по напряжению бортовой сети 12 В и подключённому кабелю — так же, как в веб-приложении
+- После отправки команды данные обновляются с нарастающими задержками (2/5/15 с)
+- Устаревший тип `FlowResult` заменён на `ConfigFlowResult` (PR #31)
+
 ### 1.2.0 — 2026-08-05
 
 - Кнопка переключения центрального замка
@@ -617,6 +626,15 @@ The API may require a valid Yandex SmartCaptcha token. Use the `setup_auth.py` s
 Check Home Assistant logs for `voyah` — typically means a network error or the API is temporarily down. The integration will retry on the next polling interval.
 
 ## Changelog
+
+### 1.3.0 — 2026-10-20
+
+- Switch to the new Voyah telemetry API: like the web app, the integration picks the API serving the car via the `newTelemetryEnabled` flag and automatically switches between the legacy and new APIs (thanks @saippuakauppias, PR #34)
+- New entities: car status sensor (offline / charging / driving / ignition / available), signal level sensor, binary sensors "Charging cable inserted", "Parked", "Car online", rear right door, outdated firmware and settings diagnostics
+- Cabin heating and cooling switches and a "Find car" button (new API only)
+- Charging state is derived from the 12 V bus voltage and the inserted cable — same logic as the web app
+- After sending a command, data is refreshed with increasing delays (2/5/15 s)
+- Deprecated `FlowResult` type replaced with `ConfigFlowResult` (PR #31)
 
 ### 1.2.0 — 2026-08-05
 
