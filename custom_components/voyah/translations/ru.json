@@ -77,7 +77,18 @@
             "speed": { "name": "Скорость" },
             "charging_end_time": { "name": "Расчётное время окончания зарядки" },
             "battery_soh": { "name": "Здоровье батареи (SOH)" },
-            "last_ping": { "name": "Последний пинг" }
+            "last_ping": { "name": "Последний пинг" },
+            "signal_level": { "name": "Уровень сигнала" },
+            "car_status": {
+                "name": "Статус автомобиля",
+                "state": {
+                    "offline": "Не в сети",
+                    "charging": "Идёт зарядка",
+                    "driving": "В пути",
+                    "ignition": "Зажигание включено",
+                    "available": "Доступен"
+                }
+            }
         },
         "device_tracker": {
             "location": { "name": "Местоположение" }
@@ -86,7 +97,8 @@
             "start_heating": { "name": "Запуск обогрева" },
             "start_cooling": { "name": "Запуск охлаждения" },
             "toggle_central_locking": { "name": "Переключить центральный замок" },
-            "toggle_trunk": { "name": "Переключить багажник" }
+            "toggle_trunk": { "name": "Переключить багажник" },
+            "find_car": { "name": "Найти автомобиль" }
         },
         "binary_sensor": {
             "ignition": { "name": "Зажигание" },
@@ -108,7 +120,17 @@
             "seat_heating_driver": { "name": "Обогрев сиденья водителя" },
             "seat_heating_front_passenger": { "name": "Обогрев сиденья переднего пассажира" },
             "seat_heating_rear_left": { "name": "Обогрев сиденья сзади слева" },
-            "seat_heating_rear_right": { "name": "Обогрев сиденья сзади справа" }
+            "seat_heating_rear_right": { "name": "Обогрев сиденья сзади справа" },
+            "door_rear_right": { "name": "Дверь сзади справа" },
+            "charging_cable": { "name": "Зарядный кабель" },
+            "parked": { "name": "Режим парковки" },
+            "online": { "name": "В сети" },
+            "firmware_outdated": { "name": "Версия прошивки устарела" },
+            "settings_outdated": { "name": "Версия настроек устарела" }
+        },
+        "switch": {
+            "heating": { "name": "Прогрев" },
+            "cooling": { "name": "Охлаждение" }
         }
     }
 }

@@ -31,7 +31,8 @@ custom_components/voyah/
 ├── sensor.py          # обычные сенсоры + вычисляемые (время окончания зарядки, SOH, last ping)
 ├── binary_sensor.py   # бинарные сенсоры по BINARY_SENSOR_DESCRIPTIONS
 ├── device_tracker.py  # GPS-трекер (TrackerEntity, точность из HDOP)
-├── button.py          # команды (запуск обогрева)
+├── button.py          # команды (обогрев, охлаждение, замок, багажник, поиск)
+├── switch.py          # прогрев/охлаждение вкл/выкл (только новый API, состояние из command_states)
 ├── strings.json       # источник истины для всех строк UI
 └── translations/      # en.json (копия strings.json), ru.json (перевод)
 tests/                 # юнит-тесты, общие фикстуры в conftest.py
@@ -39,11 +40,28 @@ tests/                 # юнит-тесты, общие фикстуры в con
 
 ## Поток данных
 
-1. `VoyahApiClient.async_get_car_data()` опрашивает `/car-service/tbox/{car_id}/sensors`
-   и нормализует ответ в `{"sensors_data": ..., "position_data": ..., "time": ..., "last_ping": ...}` (метод `_parse`).
+1. `VoyahApiClient.async_get_car_data()` при первом вызове выясняет, какой API обслуживает машину,
+   так же, как это делает веб-приложение: `imei`/`vin`/`carModel.modname` из `/car-service/car/v2/{car_id}`
+   → флаг `newTelemetryEnabled` из `/config-service/config/flags`. Если флаг включён, клиент опрашивает
+   `/client-bff-service/telemetry/{imei}` (метод `_parse_telemetry`: строки → числа, новые ключи →
+   прежние имена вроде `remainsMileage`/`chargingStatus`, чтобы не менять unique_id). Если выключен —
+   `/car-service/tbox/{car_id}/sensors` (метод `_parse`). Флаг перепроверяется раз в 12 ч в обе стороны;
+   при ошибке проверки остаётся последний известный API (до первой успешной — прежний, как в вебе)
+   с повтором через 5 мин, ошибка запроса телеметрии тоже ускоряет перепроверку.
+   Оба парсера возвращают `{"sensors_data": ..., "position_data": ..., "time": ..., "last_ping": ...}`,
+   новый — ещё `command_states` (состояния кнопок для toggle-команд и свитчей) и `checks`
+   (`firmwareCheck`/`settingsCheck`). Сущности, которых нет у старого API (статус авто,
+   свитчи, «Найти автомобиль», проверки версий), создаются только при наличии этих данных.
+   Команды кнопок и свитчей: `coordinator.async_send_command(tbox_command, telemetry_command)` →
+   клиент → `POST /client-bff-service/telemetry-commands` `{commandName, imei}` или прежний
+   `POST /car-service/tbox/{car_id}/{command}`; координатор переводит ошибку в `HomeAssistantError`
+   и обновляет данные через `COMMAND_REFRESH_DELAY_SECONDS`.
 2. `VoyahDataUpdateCoordinator` хранит этот словарь; все сущности читают из `coordinator.data`.
-3. При 401 клиент сам обновляет токены через refresh-token; координатор
-   персистит новые токены в config entry (`_persist_tokens_if_changed`).
+   Если машина сменила API (`client.uses_telemetry_api`), координатор перезагружает entry,
+   чтобы платформы заново создали сущности по новому снимку.
+3. При 401 клиент сам обновляет токены через refresh-token (один рефреш на все одновременные 401,
+   под `asyncio.Lock`); оба координатора персистят новые токены в config entry
+   (`VoyahBaseCoordinator._persist_tokens_if_changed`).
 4. `VoyahApiAuthError` → `ConfigEntryAuthFailed` (запускает reauth flow);
    `VoyahApiError` → `UpdateFailed` (сущности становятся unavailable, HA ретраит).
 
@@ -53,7 +71,9 @@ tests/                 # юнит-тесты, общие фикстуры в con
   Ключ описания = ключ в `sensors_data` ответа API (camelCase, как в API).
 - **Условное создание**: сенсоры, бинарные сенсоры и трекер добавляются только
   если их ключи присутствуют в первом снимке данных координатора
-  (см. `async_setup_entry` платформ). Кнопки-команды создаются безусловно.
+  (см. `async_setup_entry` платформ). Кнопки с командой старого API (`command`) создаются
+  безусловно; кнопки и свитчи, которые есть только в новом API, — если их команда
+  есть в `command_states`.
 - У каждой сущности: `_attr_has_entity_name = True`, `_attr_translation_key`,
   `_attr_unique_id = f"{car_id}_{key}"`, общий `DeviceInfo(identifiers={(DOMAIN, car_id)})` —
   все сущности принадлежат одному устройству-машине.

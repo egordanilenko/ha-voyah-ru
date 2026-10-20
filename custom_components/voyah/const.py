@@ -6,6 +6,7 @@ from homeassistant.components.binary_sensor import BinarySensorDeviceClass, Bina
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntityDescription, SensorStateClass
 from homeassistant.const import (
     PERCENTAGE,
+    EntityCategory,
     UnitOfElectricPotential,
     UnitOfLength,
     UnitOfPressure,
@@ -24,6 +25,12 @@ CONF_CAR_ID = "car_id"
 CONF_CAR_NAME = "car_name"
 CONF_SCAN_INTERVAL = "scan_interval"
 DEFAULT_SCAN_INTERVAL = 60
+
+# The web app reports "charging" when the gun is inserted and the 12V bus is powered.
+CHARGING_MIN_12V_VOLTAGE = 13
+
+# Refresh the coordinator this many seconds after a remote command.
+COMMAND_REFRESH_DELAY_SECONDS = (2, 5, 15)
 
 SENSOR_DESCRIPTIONS: tuple[SensorEntityDescription, ...] = (
     SensorEntityDescription(
@@ -145,6 +152,13 @@ SENSOR_DESCRIPTIONS: tuple[SensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.SPEED,
         state_class=SensorStateClass.MEASUREMENT,
     ),
+    SensorEntityDescription(
+        key="signalLevel",
+        translation_key="signal_level",
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:signal",
+    ),
 )
 
 BINARY_SENSOR_DESCRIPTIONS: tuple[BinarySensorEntityDescription, ...] = (
@@ -247,5 +261,42 @@ BINARY_SENSOR_DESCRIPTIONS: tuple[BinarySensorEntityDescription, ...] = (
         key="seatHeatingRRPassStatus",
         translation_key="seat_heating_rear_right",
         device_class=BinarySensorDeviceClass.RUNNING,
+    ),
+    BinarySensorEntityDescription(
+        key="doorRRStatus",
+        translation_key="door_rear_right",
+        device_class=BinarySensorDeviceClass.DOOR,
+    ),
+    BinarySensorEntityDescription(
+        key="isChargingGunInserted",
+        translation_key="charging_cable",
+        device_class=BinarySensorDeviceClass.PLUG,
+    ),
+    BinarySensorEntityDescription(
+        key="isParkedOn",
+        translation_key="parked",
+        icon="mdi:car-brake-parking",
+    ),
+    BinarySensorEntityDescription(
+        key="isOnline",
+        translation_key="online",
+        device_class=BinarySensorDeviceClass.CONNECTIVITY,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+)
+
+# Version checks of the new telemetry API (top-level firmwareCheck / settingsCheck).
+CHECK_BINARY_SENSOR_DESCRIPTIONS: tuple[BinarySensorEntityDescription, ...] = (
+    BinarySensorEntityDescription(
+        key="firmwareCheck",
+        translation_key="firmware_outdated",
+        device_class=BinarySensorDeviceClass.UPDATE,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    BinarySensorEntityDescription(
+        key="settingsCheck",
+        translation_key="settings_outdated",
+        device_class=BinarySensorDeviceClass.UPDATE,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
 )

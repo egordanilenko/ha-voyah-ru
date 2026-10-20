@@ -1,5 +1,7 @@
 """Tests for Voyah device tracker platform."""
 
+from datetime import UTC, datetime
+
 from homeassistant.components.device_tracker import SourceType
 from homeassistant.core import HomeAssistant
 
@@ -55,6 +57,16 @@ async def test_tracker_extra_state_attributes(hass: HomeAssistant) -> None:
     assert attrs["hdop"] == 1.2
     assert attrs["altitude"] == 150
     assert attrs["satellites"] == 8
+    assert attrs["position_at"] == datetime.fromtimestamp(1699999990.5, tz=UTC)
+
+
+async def test_tracker_position_at_none_when_missing(hass: HomeAssistant) -> None:
+    """position_at attribute is None when the API does not report the GPS fix time."""
+    data = {**MOCK_CAR_DATA, "position_data": {"lat": 55.0, "lon": 37.0}}
+    coordinator = make_coordinator(hass, data)
+    entry = make_config_entry(hass)
+    tracker = VoyahDeviceTracker(coordinator, entry)
+    assert tracker.extra_state_attributes["position_at"] is None
 
 
 async def test_tracker_returns_none_when_position_missing(hass: HomeAssistant) -> None:
@@ -74,3 +86,12 @@ async def test_tracker_unique_id(hass: HomeAssistant) -> None:
     entry = make_config_entry(hass)
     tracker = VoyahDeviceTracker(coordinator, entry)
     assert tracker.unique_id == f"{MOCK_CONFIG_DATA['car_id']}_location"
+
+
+async def test_tracker_position_at_none_when_out_of_range(hass: HomeAssistant) -> None:
+    """A GPS fix time outside the datetime range does not break the tracker attributes."""
+    data = {**MOCK_CAR_DATA, "position_data": {**MOCK_CAR_DATA["position_data"], "position_at": 1e20}}
+    coordinator = make_coordinator(hass, data)
+    entry = make_config_entry(hass)
+    tracker = VoyahDeviceTracker(coordinator, entry)
+    assert tracker.extra_state_attributes["position_at"] is None

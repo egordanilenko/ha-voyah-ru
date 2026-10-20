@@ -2,15 +2,17 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
 
 from homeassistant.core import HomeAssistant
+import pytest
 import time_machine
 
 from custom_components.voyah.const import SENSOR_DESCRIPTIONS
 from custom_components.voyah.sensor import (
     RATE_WINDOW_POINTS,
+    VoyahCarStatusSensor,
     VoyahChargingEndTimeSensor,
     VoyahLastPingSensor,
     VoyahSensorEntity,
@@ -55,6 +57,15 @@ async def test_inboard_temp_sensor_returns_value(hass: HomeAssistant) -> None:
     desc = next(d for d in SENSOR_DESCRIPTIONS if d.key == "inBoardTemp")
     sensor = VoyahSensorEntity(coordinator, desc, entry)
     assert sensor.native_value == 22
+
+
+async def test_signal_level_sensor_returns_value(hass: HomeAssistant) -> None:
+    """signalLevel sensor reads the cellular signal level."""
+    coordinator = make_coordinator(hass, MOCK_CAR_DATA)
+    entry = make_config_entry(hass)
+    desc = next(d for d in SENSOR_DESCRIPTIONS if d.key == "signalLevel")
+    sensor = VoyahSensorEntity(coordinator, desc, entry)
+    assert sensor.native_value == 20
 
 
 async def test_last_ping_sensor_returns_value(hass: HomeAssistant) -> None:
@@ -173,7 +184,7 @@ async def test_compute_end_time_happy_path(hass: HomeAssistant) -> None:
     sensor._pct_history.append((59, 0))
     sensor._pct_history.append((60, 100))
 
-    frozen_now = datetime(2024, 6, 1, 12, 0, 0, tzinfo=timezone.utc)
+    frozen_now = datetime(2024, 6, 1, 12, 0, 0, tzinfo=UTC)
     with time_machine.travel(frozen_now, tick=False):
         result = sensor._compute_end_time()
 
@@ -232,6 +243,32 @@ async def test_update_resets_tracking_when_charging_stops(hass: HomeAssistant) -
     assert sensor._cached_end_time is None
 
 
+async def test_update_keeps_tracking_when_charging_state_unknown(hass: HomeAssistant) -> None:
+    """An unknown charging state (no 12V voltage on the new API) does not reset the estimate."""
+    data = {
+        **MOCK_CAR_DATA,
+        "sensors_data": {**MOCK_CAR_DATA["sensors_data"], "chargingStatus": True, "batteryPercentage": 70},
+        "time": 1000,
+    }
+    coordinator = make_coordinator(hass, data)
+    entry = make_config_entry(hass)
+    sensor = VoyahChargingEndTimeSensor(coordinator, entry)
+    end_time = datetime(2024, 1, 1, tzinfo=UTC)
+    sensor._cached_end_time = end_time
+
+    coordinator.data = {
+        **data,
+        "sensors_data": {**data["sensors_data"], "chargingStatus": None, "batteryPercentage": 71},
+        "time": 2000,
+    }
+    with patch.object(sensor, "async_write_ha_state"):
+        sensor._handle_coordinator_update()
+
+    assert sensor._was_charging is True
+    assert sensor._pct_history[-1] == (70, 1000)
+    assert sensor.native_value == end_time
+
+
 async def test_update_adds_point_and_recalculates_on_pct_change(hass: HomeAssistant) -> None:
     """New data point added and end time recalculated when pct changes."""
     data = {
@@ -274,7 +311,7 @@ async def test_update_skips_recalculation_when_pct_unchanged(hass: HomeAssistant
     sensor = VoyahChargingEndTimeSensor(coordinator, entry)
     sensor._was_charging = True
     sensor._last_seen_pct = 50
-    sentinel = datetime(2099, 1, 1, tzinfo=timezone.utc)
+    sentinel = datetime(2099, 1, 1, tzinfo=UTC)
     sensor._cached_end_time = sentinel
 
     coordinator.data = {**data, "time": 2000}  # same pct=50
@@ -333,3 +370,47 @@ async def test_soh_sensor_unique_id(hass: HomeAssistant) -> None:
     entry = make_config_entry(hass)
     sensor = VoyahSohSensor(coordinator, entry)
     assert sensor.unique_id == f"{MOCK_CAR_ID}_battery_soh"
+
+
+# ── VoyahCarStatusSensor ─────────────────────────────────────────────────────
+
+
+@pytest.mark.parametrize(
+    ("sensors", "expected"),
+    [
+        ({"isOnline": False, "isChargingGunInserted": True, "12VBatteryVoltage": 14.0}, "offline"),
+        ({"isOnline": 0}, "offline"),
+        ({"isChargingGunInserted": True, "12VBatteryVoltage": 14.0, "isParkedOn": False}, "charging"),
+        ({"isChargingGunInserted": 1, "12VBatteryVoltage": 13}, "charging"),
+        ({"isChargingGunInserted": True, "12VBatteryVoltage": 12.4}, "available"),
+        ({"isChargingGunInserted": True}, "available"),
+        ({"isParkedOn": False, "isIgnitionOn": True}, "driving"),
+        ({"isParkedOn": 0}, "driving"),
+        ({"isParkedOn": True, "isIgnitionOn": True}, "ignition"),
+        ({"isIgnitionOn": 1}, "ignition"),
+        ({"isParkedOn": True, "isIgnitionOn": False}, "available"),
+        ({"isParkedOn": "n/a", "isIgnitionOn": "n/a"}, "available"),
+        # Legacy keys are not part of the new telemetry API and are ignored.
+        ({"ready": 1, "chargingStatus": 1, "ignitionStatus": 1, "12VBatteryVoltage": 14.0}, "available"),
+    ],
+)
+async def test_car_status_sensor_mirrors_web_app(
+    hass: HomeAssistant, sensors: dict[str, object], expected: str
+) -> None:
+    """Car status follows the web app priority: offline, charging, driving, ignition, available."""
+    data = {**MOCK_CAR_DATA, "sensors_data": {"isOnline": True, **sensors}}
+    coordinator = make_coordinator(hass, data)
+    entry = make_config_entry(hass)
+    sensor = VoyahCarStatusSensor(coordinator, entry)
+    assert sensor.native_value == expected
+    assert expected in sensor.options
+
+
+async def test_car_status_sensor_none_without_online_state(hass: HomeAssistant) -> None:
+    """Car status is unknown when the API does not report the online state."""
+    data = {**MOCK_CAR_DATA, "sensors_data": {"isParkedOn": True}}
+    coordinator = make_coordinator(hass, data)
+    entry = make_config_entry(hass)
+    sensor = VoyahCarStatusSensor(coordinator, entry)
+    assert sensor.native_value is None
+    assert sensor.unique_id == f"{MOCK_CAR_ID}_car_status"

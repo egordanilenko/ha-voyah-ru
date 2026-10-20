@@ -9,7 +9,7 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import BINARY_SENSOR_DESCRIPTIONS, CONF_CAR_ID, CONF_CAR_NAME, DOMAIN
+from .const import BINARY_SENSOR_DESCRIPTIONS, CHECK_BINARY_SENSOR_DESCRIPTIONS, CONF_CAR_ID, CONF_CAR_NAME, DOMAIN
 from .coordinator import VoyahDataUpdateCoordinator
 
 
@@ -21,11 +21,17 @@ async def async_setup_entry(
     """Set up Voyah binary sensor entities."""
     coordinator: VoyahDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
 
-    async_add_entities(
+    entities: list[BinarySensorEntity] = [
         VoyahBinarySensorEntity(coordinator, description, entry)
         for description in BINARY_SENSOR_DESCRIPTIONS
         if description.key in coordinator.data.get("sensors_data", {})
+    ]
+    entities.extend(
+        VoyahCheckBinarySensor(coordinator, description, entry)
+        for description in CHECK_BINARY_SENSOR_DESCRIPTIONS
+        if description.key in coordinator.data.get("checks", {})
     )
+    async_add_entities(entities)
 
 
 class VoyahBinarySensorEntity(CoordinatorEntity[VoyahDataUpdateCoordinator], BinarySensorEntity):
@@ -57,3 +63,27 @@ class VoyahBinarySensorEntity(CoordinatorEntity[VoyahDataUpdateCoordinator], Bin
         if value is None:
             return None
         return bool(value)
+
+
+class VoyahCheckBinarySensor(VoyahBinarySensorEntity):
+    """Version check of the new telemetry API: on when the car differs from its profile."""
+
+    @property
+    def _check(self) -> dict:
+        return self.coordinator.data.get("checks", {}).get(self.entity_description.key) or {}
+
+    @property
+    def is_on(self) -> bool | None:
+        """Return true if the car version does not match the expected one."""
+        mismatch = self._check.get("mismatch")
+        if mismatch is None:
+            return None
+        return bool(mismatch)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, str | None]:
+        """Return the version on the car and the version in its profile."""
+        return {
+            "actual": self._check.get("actual"),
+            "expected": self._check.get("expected"),
+        }

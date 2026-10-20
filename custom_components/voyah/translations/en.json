@@ -77,7 +77,18 @@
             "speed": { "name": "Speed" },
             "charging_end_time": { "name": "Estimated charging end time" },
             "battery_soh": { "name": "Battery SOH" },
-            "last_ping": { "name": "Last ping" }
+            "last_ping": { "name": "Last ping" },
+            "signal_level": { "name": "Signal level" },
+            "car_status": {
+                "name": "Car status",
+                "state": {
+                    "offline": "Offline",
+                    "charging": "Charging",
+                    "driving": "Driving",
+                    "ignition": "Ignition on",
+                    "available": "Available"
+                }
+            }
         },
         "device_tracker": {
             "location": { "name": "Location" }
@@ -86,7 +97,8 @@
             "start_heating": { "name": "Start heating" },
             "start_cooling": { "name": "Start cooling" },
             "toggle_central_locking": { "name": "Toggle central lock" },
-            "toggle_trunk": { "name": "Toggle trunk" }
+            "toggle_trunk": { "name": "Toggle trunk" },
+            "find_car": { "name": "Find car" }
         },
         "binary_sensor": {
             "ignition": { "name": "Ignition" },
@@ -108,7 +120,17 @@
             "seat_heating_driver": { "name": "Seat heating driver" },
             "seat_heating_front_passenger": { "name": "Seat heating front passenger" },
             "seat_heating_rear_left": { "name": "Seat heating rear left" },
-            "seat_heating_rear_right": { "name": "Seat heating rear right" }
+            "seat_heating_rear_right": { "name": "Seat heating rear right" },
+            "door_rear_right": { "name": "Door rear right" },
+            "charging_cable": { "name": "Charging cable" },
+            "parked": { "name": "Parked" },
+            "online": { "name": "Online" },
+            "firmware_outdated": { "name": "Firmware outdated" },
+            "settings_outdated": { "name": "Settings outdated" }
+        },
+        "switch": {
+            "heating": { "name": "Heating" },
+            "cooling": { "name": "Cooling" }
         }
     }
 }

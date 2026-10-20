@@ -25,7 +25,8 @@ Silver в Quality Scale); текущее ниже цели, поэтому но�
 | Хелпер | Что даёт |
 |---|---|
 | `MOCK_CAR_DATA` | полный снимок данных координатора (все сенсоры, GPS, time, last_ping) |
-| `MOCK_CAR_INFO_DATA` | данные car-info координатора (`liveSensors.soh` и т.п.) |
+| `MOCK_CAR_INFO_DATA` | ответ `/car-service/car/v2/{id}` = данные car-info координатора (`imei`, `carModel.modname`, `liveSensors.soh`) |
+| `MOCK_TELEMETRY_RESPONSE` | сырой ответ нового API `/client-bff-service/telemetry/{imei}` (значения-строки, `buttons`) |
 | `make_coordinator(hass, data)` | `VoyahDataUpdateCoordinator` с предустановленным `data` (клиент — `MagicMock`) |
 | `make_car_info_coordinator(hass, data)` | то же для `VoyahCarInfoCoordinator` |
 | `make_config_entry(hass)` | зарегистрированный `MockConfigEntry` с `MOCK_CONFIG_DATA` |
@@ -72,10 +73,21 @@ API-временные метки (`time` в данных) — обычные un
 ## Паттерн: API-клиент
 
 `test_api.py`: мокается `aiohttp`-сессия. Проверяй:
-- успешный запрос и парсинг (`_parse`: `sensorsData`/`positionData`/`time`/`lastPing`);
+- успешный запрос и парсинг: `_parse` (прежний API: `sensorsData`/`positionData`/`time`/`lastPing`)
+  и `_parse_telemetry` (новый API: приведение строк, алиасы ключей, `command_states`);
+- выбор API по флагу `newTelemetryEnabled` — хелпер `_routed_session` отвечает по префиксу пути,
+  а `_at(seconds)` фиксирует `time.monotonic` для сценариев перепроверки флага;
 - 401 → рефреш токена → повтор запроса; повторный 401 → `VoyahApiAuthError`;
 - сетевые ошибки → `VoyahApiConnectionError`;
 - неуспешный рефреш (не-200, отсутствие токенов в ответе) → `False`.
+
+## Паттерн: команды
+
+Кнопки и свитчи вызывают `coordinator.async_send_command(...)` — в их тестах патчь этот метод
+(`patch.object(coordinator, "async_send_command", new_callable=AsyncMock)`) и проверяй аргументы.
+Сам `async_send_command` тестируется в `test_coordinator.py`: он ставит таймеры
+`async_call_later`, а фикстура `hass` падает на незавершённых таймерах, поэтому в тесте
+прокрути время через `async_fire_time_changed` и дождись `hass.async_block_till_done()`.
 
 ## Паттерн: config flow
 
@@ -92,6 +104,10 @@ config flow должен быть покрыт полностью.
 ```python
 async def test_full_setup(hass, enable_custom_integrations): ...
 ```
+
+Образец — `test_init.py`: HTTP-ответы мокаются фикстурой `aioclient_mock`,
+запись создаётся с `version=VoyahConfigFlow.VERSION` (иначе HA попытается
+мигрировать её и setup упадёт), состояния ищутся через entity registry по unique_id.
 
 ## Правила
 

@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from collections import deque
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 import logging
+from typing import Any
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorEntityDescription, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
@@ -14,13 +15,15 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import CONF_CAR_ID, CONF_CAR_NAME, DOMAIN, SENSOR_DESCRIPTIONS
+from .const import CHARGING_MIN_12V_VOLTAGE, CONF_CAR_ID, CONF_CAR_NAME, DOMAIN, SENSOR_DESCRIPTIONS
 from .coordinator import VoyahCarInfoCoordinator, VoyahDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
 TARGET_BATTERY_PCT = 100
 RATE_WINDOW_POINTS = 4  # 4 data points = 3% sliding window
+
+CAR_STATUS_OPTIONS = ["offline", "charging", "driving", "ignition", "available"]
 
 
 async def async_setup_entry(
@@ -56,6 +59,10 @@ async def async_setup_entry(
 
     if "last_ping" in coordinator.data:
         entities.append(VoyahLastPingSensor(coordinator, entry))
+
+    # Only the new telemetry API reports the online state the status is based on.
+    if "isOnline" in sensors_data:
+        entities.append(VoyahCarStatusSensor(coordinator, entry))
 
     _LOGGER.debug("Creating %d sensor entities", len(entities))
     async_add_entities(entities)
@@ -160,7 +167,7 @@ class VoyahChargingEndTimeSensor(CoordinatorEntity[VoyahDataUpdateCoordinator], 
         rate = delta_pct / delta_time  # percent per second
         remaining_pct = TARGET_BATTERY_PCT - newest_pct
         remaining_seconds = remaining_pct / rate
-        end_time = datetime.now(tz=timezone.utc) + timedelta(seconds=remaining_seconds)
+        end_time = datetime.now(tz=UTC) + timedelta(seconds=remaining_seconds)
 
         _LOGGER.debug(
             "Charge estimate: window=%s pts (%s%%..%s%%), "
@@ -186,9 +193,14 @@ class VoyahChargingEndTimeSensor(CoordinatorEntity[VoyahDataUpdateCoordinator], 
     def _handle_coordinator_update(self) -> None:
         """Recalculate only when charging state or battery percentage changes."""
         sensors = self.coordinator.data.get("sensors_data", {})
-        is_charging = bool(sensors.get("chargingStatus"))
+        charging = sensors.get("chargingStatus")
 
-        if not is_charging:
+        if charging is None:
+            # Unknown charging state (e.g. no 12V voltage in this snapshot): keep the current estimate.
+            super()._handle_coordinator_update()
+            return
+
+        if not charging:
             if self._was_charging:
                 _LOGGER.debug("Charging stopped, resetting tracking")
                 self._reset_tracking()
@@ -279,3 +291,58 @@ class VoyahLastPingSensor(CoordinatorEntity[VoyahDataUpdateCoordinator], SensorE
     def native_value(self) -> float | None:
         """Return seconds since the last ping from the car."""
         return self.coordinator.data.get("last_ping")
+
+
+class VoyahCarStatusSensor(CoordinatorEntity[VoyahDataUpdateCoordinator], SensorEntity):
+    """Overall car status, computed the same way as the status chip in the web app."""
+
+    _attr_has_entity_name = True
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = CAR_STATUS_OPTIONS
+    _attr_translation_key = "car_status"
+    _attr_icon = "mdi:car-info"
+
+    def __init__(
+        self,
+        coordinator: VoyahDataUpdateCoordinator,
+        entry: ConfigEntry,
+    ) -> None:
+        super().__init__(coordinator)
+        car_id = entry.data.get(CONF_CAR_ID, entry.entry_id)
+        self._attr_unique_id = f"{car_id}_car_status"
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, car_id)},
+            name=entry.data.get(CONF_CAR_NAME, "Voyah"),
+            manufacturer="Voyah",
+        )
+
+    @property
+    def native_value(self) -> str | None:
+        """Return offline, charging, driving, ignition or available (first match wins)."""
+        sensors = self.coordinator.data.get("sensors_data", {})
+        online = sensors.get("isOnline")
+        if online is None:
+            return None
+        if not _flag(online):
+            return "offline"
+
+        # The web app runs the same checks on legacy keys too (ready, chargingStatus, ignitionStatus);
+        # the new telemetry API does not report them, so only its own keys are used here.
+        voltage = sensors.get("12VBatteryVoltage")
+        powered = isinstance(voltage, (int, float)) and voltage >= CHARGING_MIN_12V_VOLTAGE
+        if powered and _flag(sensors.get("isChargingGunInserted")):
+            return "charging"
+        if _flag(sensors.get("isParkedOn")) is False:
+            return "driving"
+        if _flag(sensors.get("isIgnitionOn")):
+            return "ignition"
+        return "available"
+
+
+def _flag(value: Any) -> bool | None:
+    """Read a telemetry flag the way the web app does: true/1 → True, false/other numbers → False."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return value == 1
+    return None

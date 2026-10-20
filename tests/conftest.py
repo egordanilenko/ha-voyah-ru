@@ -31,9 +31,78 @@ MOCK_CONFIG_DATA = {
     CONF_SCAN_INTERVAL: DEFAULT_SCAN_INTERVAL,
 }
 
+MOCK_IMEI = "860000000000001"
+MOCK_VIN = "VIN00000000000001"
+
+# Response of GET /car-service/car/v2/{car_id} (car info coordinator data).
 MOCK_CAR_INFO_DATA = {
+    "_id": MOCK_CAR_ID,
+    "vin": MOCK_VIN,
+    "imei": MOCK_IMEI,
+    "brand": "voyah",
+    "carModel": {"name": "Dream", "modname": "H56b"},
     "liveSensors": {"odometer": 251, "soh": 98},
     "updateAvailable": False,
+}
+
+# Response of GET /client-bff-service/telemetry/{imei}, captured from the web app (values anonymized).
+MOCK_TELEMETRY_RESPONSE = {
+    "automations": [],
+    "buttons": [
+        {"title": "Прогрев", "status": True, "activateCommand": "heatingOn", "deactivateCommand": "heatingOff"},
+        {"title": "Охлаждение", "status": False, "activateCommand": "coolingOn", "deactivateCommand": "coolingOff"},
+        {
+            "title": "Багажник",
+            "status": False,
+            "activateCommand": "trunkOpen",
+            "deactivateCommand": "trunkClose",
+            "tag": "trunk",
+        },
+        {
+            "title": "Центральный замок",
+            "status": False,
+            "activateCommand": "centralLockingOff",
+            "deactivateCommand": "centralLockingOn",
+            "tag": "central-lock",
+        },
+        {"title": "Поиск", "status": False, "activateCommand": "search", "deactivateCommand": "search"},
+    ],
+    "sensors": {
+        "12VBatteryVoltage": "14.539999961853027",
+        "batteryPercentage": "91",
+        "batteryTemp": "",
+        "climateFanSpeed": "5",
+        "climateTargetTemp": "28",
+        "coolantTemp": "2",
+        "course": "258",
+        "doorFLStatus": False,
+        "doorRRStatus": True,
+        "fuelPercentage": "100",
+        "headLightsStatus": "0",
+        "inBoardTemp": "21",
+        "isCentralLockingOn": True,
+        "isChargingGunInserted": True,
+        "isIgnitionOn": True,
+        "isParkedOn": True,
+        "lat": "55.75",
+        "lon": "37.61",
+        "odometer": "14348",
+        "outsideTemp": "-1.5",
+        "remainsBatteryMileage": "113",
+        "remainsFuelMileage": "563",
+        "signalLevel": "20",
+        "tirePressureFL": 2.1,
+        "trunkStatus": False,
+        "isOnline": True,
+    },
+    "isOnline": True,
+    "onlineState": "connected",
+    "firmwareCheck": {"expected": "fw-1.0", "actual": "fw-1.1", "mismatch": True},
+    "settingsCheck": {"expected": "cfg-1", "actual": "cfg-1", "mismatch": False},
+    "isCarStateReady": True,
+    "carStateUpdatedAt": 1792471790719,
+    "positionAt": 1792471790709,
+    "warnings": [],
 }
 
 MOCK_CAR_DATA = {
@@ -75,6 +144,11 @@ MOCK_CAR_DATA = {
         "seatHeatingFPassStatus": 0,
         "seatHeatingRLPassStatus": 0,
         "seatHeatingRRPassStatus": 0,
+        "doorRRStatus": False,
+        "isChargingGunInserted": False,
+        "isParkedOn": True,
+        "isOnline": True,
+        "signalLevel": 20,
     },
     "position_data": {
         "lat": 55.7558,
@@ -84,9 +158,21 @@ MOCK_CAR_DATA = {
         "sats": 8,
         "hdop": 1.2,
         "speed": 0,
+        "position_at": 1699999990.5,
     },
     "time": 1700000000,
     "last_ping": 6.614,
+    "command_states": {
+        "heatingOn": True,
+        "coolingOn": False,
+        "trunkOpen": False,
+        "centralLockingOff": False,
+        "search": False,
+    },
+    "checks": {
+        "firmwareCheck": {"expected": "fw-1.0", "actual": "fw-1.1", "mismatch": True},
+        "settingsCheck": {"expected": "cfg-1", "actual": "cfg-1", "mismatch": False},
+    },
 }
 
 
